@@ -44,8 +44,7 @@ class RouteClosure
     {
         // Assign properties.
         $reflection = new \ReflectionFunction($closure);
-        $this->parameterTypes = $this->validateParameterTypes($reflection);
-        $this->returnType = $this->validateReturnType($reflection);
+        $this->validate($reflection);
         $this->closure = $closure;
     }
 }

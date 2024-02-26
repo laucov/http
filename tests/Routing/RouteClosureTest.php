@@ -43,6 +43,7 @@ class RouteClosureTest extends TestCase
 {
     /**
      * @covers ::__construct
+     * @uses Laucov\Http\Routing\RouteClosure::validate
      * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
      * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      */
@@ -63,6 +64,7 @@ class RouteClosureTest extends TestCase
 
     /**
      * @covers ::__construct
+     * @covers ::validate
      * @covers ::validateParameterTypes
      * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      */
@@ -76,6 +78,7 @@ class RouteClosureTest extends TestCase
 
     /**
      * @covers ::__construct
+     * @covers ::validate
      * @covers ::validateReturnType
      * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
      */
@@ -87,6 +90,7 @@ class RouteClosureTest extends TestCase
 
     /**
      * @covers ::__construct
+     * @covers ::validate
      * @covers ::validateParameterTypes
      * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      */
@@ -109,6 +113,7 @@ class RouteClosureTest extends TestCase
 
     /**
      * @covers ::__construct
+     * @covers ::validate
      * @covers ::validateReturnType
      * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
      */

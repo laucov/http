@@ -72,11 +72,20 @@ trait RouteCallableTrait
     public string $returnType;
 
     /**
+     * Validate and register the callable's parameter and return types.
+     */
+    protected function validate(\ReflectionFunctionAbstract $reflection): void
+    {
+        $this->validateParameterTypes($reflection);
+        $this->validateReturnType($reflection);
+    }
+
+    /**
      * Find the closure's return type name.
      */
     protected function validateReturnType(
         \ReflectionFunctionAbstract $reflection,
-    ): string {
+    ): void {
         // Get the ReflectionType object and check if is a named type.
         $return_type = $reflection->getReturnType();
         if (!($return_type instanceof \ReflectionNamedType)) {
@@ -95,17 +104,15 @@ trait RouteCallableTrait
             throw new \InvalidArgumentException($message);
         }
 
-        return $name;
+        $this->returnType = $name;
     }
 
     /**
      * Find the closure's parameter type names.
-     * 
-     * @return array<RouteClosureType>
      */
     protected function validateParameterTypes(
         \ReflectionFunctionAbstract $reflection,
-    ): array {
+    ): void {
         // Initialize type array.
         $types = [];
         
@@ -135,6 +142,6 @@ trait RouteCallableTrait
             $types[] = $result;
         }
 
-        return $types;
+        $this->parameterTypes = $types;
     }
 }

@@ -73,6 +73,7 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\Route::__construct
      * @uses Laucov\Http\Routing\Route::run
      * @uses Laucov\Http\Routing\RouteClosure::__construct
+     * @uses Laucov\Http\Routing\RouteClosure::validate
      * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
      * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      * @uses Laucov\Http\Routing\Router::__construct

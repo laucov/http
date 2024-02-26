@@ -49,6 +49,7 @@ class RouteTest extends TestCase
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
      * @uses Laucov\Http\Routing\RouteClosure::__construct
+     * @uses Laucov\Http\Routing\RouteClosure::validate
      * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
      * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      */
