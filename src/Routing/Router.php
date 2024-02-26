@@ -170,14 +170,60 @@ class Router
         return $this;
     }
 
+    // /**
+    //  * Store a route for the given class method.
+    //  */
+    // public function setClassRoute(
+    //     string $method,
+    //     string $path,
+    //     string $class_name,
+    //     string $class_method,
+    // ): static {
+    //     // Store a new route class method.
+    //     $keys = $this->getRouteKeys($method, $path);
+    //     $route_closure = new RouteClassMethod($class_name, $class_method);
+    //     $this->routes->setValue($keys, $route_closure);
+
+    //     return $this;
+    // }
+
     /**
      * Store a route for the given closure.
+     */
+    public function setClosureRoute(
+        string $method,
+        string $path,
+        \Closure $callback,
+    ): static {
+        // Store a new route closure.
+        $keys = $this->getRouteKeys($method, $path);
+        $route_closure = new RouteClosure($callback);
+        $this->routes->setValue($keys, $route_closure);
+        
+        return $this;
+    }
+
+    /**
+     * Store a route for the given closure.
+     * 
+     * @codeCoverageIgnore
+     * @deprecated 2.0.0 Use `setClosureRoute()` instead.
      */
     public function setRoute(
         string $method,
         string $path,
         \Closure $callback,
     ): static {
+        return $this->setClosureRoute($method, $path, $callback);
+    }
+
+    /**
+     * Get route keys for a given path.
+     * 
+     * @return array<string>
+     */
+    protected function getRouteKeys(string $method, string $path): array
+    {
         // Get prefix segments.
         $prefix = implode('/', $this->prefixes);
         $prefix_segments = strlen($prefix) > 0 ? explode('/', $prefix) : [];
@@ -187,11 +233,6 @@ class Router
         $segments = $path ? explode('/', $path) : [];
         $segments[] = '/';
 
-        // Store a new route closure.
-        $keys = [$method, ...$prefix_segments, ...$segments];
-        $route_closure = new RouteClosure($callback);
-        $this->routes->setValue($keys, $route_closure);
-        
-        return $this;
+        return [$method, ...$prefix_segments, ...$segments];
     }
 }

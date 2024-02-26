@@ -51,10 +51,11 @@ class RouterTest extends TestCase
     /**
      * @covers ::__construct
      * @covers ::findRoute
+     * @covers ::getRouteKeys
      * @covers ::popPrefix
      * @covers ::pushPrefix
+     * @covers ::setClosureRoute
      * @covers ::setPattern
-     * @covers ::setRoute
      * @uses Laucov\Arrays\ArrayBuilder::setValue
      * @uses Laucov\Arrays\ArrayReader::__construct
      * @uses Laucov\Arrays\ArrayReader::getValue
@@ -72,8 +73,8 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\Route::__construct
      * @uses Laucov\Http\Routing\Route::run
      * @uses Laucov\Http\Routing\RouteClosure::__construct
-     * @uses Laucov\Http\Routing\RouteClosure::findClosureParameterTypes
-     * @uses Laucov\Http\Routing\RouteClosure::findClosureReturnType
+     * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
+     * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      * @uses Laucov\Http\Routing\Router::__construct
      */
     public function testCanSetAndFindRoutes(): void
@@ -82,7 +83,7 @@ class RouterTest extends TestCase
         $closure_a = fn(): string => 'Output A';
         $this->assertSame(
             $this->router,
-            $this->router->setRoute('GET', 'path/to/route-a', $closure_a),
+            $this->router->setClosureRoute('GET', 'path/to/route-a', $closure_a),
         );
 
         // Get existent route.
@@ -99,17 +100,17 @@ class RouterTest extends TestCase
 
         // Test router's path trimming.
         $closure_b = fn(): string => 'Output B';
-        $this->router->setRoute('POST', 'path/to/route-b/', $closure_b);
+        $this->router->setClosureRoute('POST', 'path/to/route-b/', $closure_b);
         $route_b = $this->findRoute('POST', 'path/to/route-b');
         $this->assertInstanceOf(Route::class, $route_b);
         $this->assertSame('Output B', (string) $route_b->run()->getBody());
         $closure_c = fn(): string => 'Output C';
-        $this->router->setRoute('PUT', '/path/to/route-c', $closure_c);
+        $this->router->setClosureRoute('PUT', '/path/to/route-c', $closure_c);
         $route_c = $this->findRoute('PUT', 'path/to/route-c');
         $this->assertInstanceOf(Route::class, $route_c);
         $this->assertSame('Output C', (string) $route_c->run()->getBody());
         $closure_d = fn(): string => 'Output D';
-        $this->router->setRoute('PATCH', '/path/to/route-d/', $closure_d);
+        $this->router->setClosureRoute('PATCH', '/path/to/route-d/', $closure_d);
         $route_d = $this->findRoute('PATCH', 'path/to/route-d');
         $this->assertInstanceOf(Route::class, $route_d);
         $this->assertSame('Output D', (string) $route_d->run()->getBody());
@@ -123,14 +124,14 @@ class RouterTest extends TestCase
 
         // Test without parameters.
         $closure_e = fn(): string => 'Output E';
-        $this->router->setRoute('POST', 'routes/:alpha', $closure_e);
+        $this->router->setClosureRoute('POST', 'routes/:alpha', $closure_e);
         $route_e = $this->findRoute('POST', 'routes/e');
         $this->assertInstanceOf(Route::class, $route_e);
         $this->assertSame('Output E', (string) $route_e->run()->getBody());
 
         // Test with parameters.
         $closure_f = fn(string $a): string => sprintf('Output %s', $a);
-        $this->router->setRoute('GET', 'routes/:int', $closure_f);
+        $this->router->setClosureRoute('GET', 'routes/:int', $closure_f);
         $route_f = $this->findRoute('GET', 'routes/123');
         $this->assertInstanceOf(Route::class, $route_f);
         $this->assertSame('Output 123', (string) $route_f->run()->getBody());
@@ -144,7 +145,7 @@ class RouterTest extends TestCase
             $host = $b->getUri()->host;
             return "{$a}, {$host}, {$c}";
         };
-        $this->router->setRoute('POST', 'routes/:int/test/:alpha', $closure_g);
+        $this->router->setClosureRoute('POST', 'routes/:int/test/:alpha', $closure_g);
         $route_g = $this->findRoute('POST', 'routes/123/test/abc');
         $this->assertInstanceOf(Route::class, $route_g);
         $content_g = (string) $route_g->run()->getBody();
@@ -155,7 +156,7 @@ class RouterTest extends TestCase
             return $a . ', ' . implode(', ', $b);
         };
         $path_h = 'foos/:int/bars/:int/bazes/:int';
-        $this->router->setRoute('POST', $path_h, $closure_h);
+        $this->router->setClosureRoute('POST', $path_h, $closure_h);
         $route_h = $this->findRoute('POST', 'foos/1/bars/9/bazes/0');
         $this->assertInstanceOf(Route::class, $route_h);
         $content_h = (string) $route_h->run()->getBody();
@@ -163,7 +164,7 @@ class RouterTest extends TestCase
 
         // Test pushing prefix.
         $this->assertSame($this->router, $this->router->pushPrefix('prefix'));
-        $this->router->setRoute('GET', 'path/a', fn (): string => 'Path A');
+        $this->router->setClosureRoute('GET', 'path/a', fn (): string => 'Path A');
         $route_i = $this->findRoute('GET', 'prefix/path/a');
         $this->assertInstanceOf(Route::class, $route_i);
         $content_i = (string) $route_i->run()->getBody();
@@ -171,7 +172,7 @@ class RouterTest extends TestCase
 
         // Test popping prefix.
         $this->assertSame($this->router, $this->router->popPrefix());
-        $this->router->setRoute('GET', 'path/b', fn (): string => 'Path B');
+        $this->router->setClosureRoute('GET', 'path/b', fn (): string => 'Path B');
         $route_j = $this->findRoute('GET', 'path/b');
         $this->assertInstanceOf(Route::class, $route_j);
         $content_j = (string) $route_j->run()->getBody();
@@ -180,14 +181,14 @@ class RouterTest extends TestCase
         // Test prefix trimming.
         $this->router
             ->pushPrefix('/animals')
-                ->setRoute('GET', 'dog', fn (): string => 'Dog!')
+                ->setClosureRoute('GET', 'dog', fn (): string => 'Dog!')
             ->popPrefix()
             ->pushPrefix('plants/')
-                ->setRoute('GET', 'tree', fn (): string => 'Tree!')
+                ->setClosureRoute('GET', 'tree', fn (): string => 'Tree!')
             ->popPrefix()
             ->pushPrefix('/plants/')
                 ->pushPrefix('flowers')
-                    ->setRoute('GET', 'poppy', fn (): string => 'Poppy!')
+                    ->setClosureRoute('GET', 'poppy', fn (): string => 'Poppy!')
                 ->popPrefix()
             ->popPrefix();
         $tests = [
@@ -201,6 +202,21 @@ class RouterTest extends TestCase
             $content = (string) $route->run()->getBody();
             $this->assertSame($test[1], $content);
         }
+
+        // // Test with object methods.
+        // $this->router
+        //     ->setClassRoute('GET', 'greeting', Example::class, 'greet')
+        //     ->setClassRoute('GET', 'farewell', Example::class, 'sayBye');
+        // $tests = [
+        //     ['greeting', 'Hello!'],
+        //     ['farewell', 'Goodbye!'],
+        // ];
+        // foreach ($tests as $test) {
+        //     $route = $this->findRoute('GET', $test[0]);
+        //     $this->assertInstanceOf(Route::class, $route);
+        //     $content = (string) $route->run()->getBody();
+        //     $this->assertSame($test[1], $content);
+        // }
     }
 
     /**
@@ -218,5 +234,13 @@ class RouterTest extends TestCase
         );
 
         return $this->router->findRoute($request);
+    }
+}
+
+class Example
+{
+    public function greet(): string
+    {
+        return 'Hello!';
     }
 }
