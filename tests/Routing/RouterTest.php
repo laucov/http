@@ -208,11 +208,11 @@ class RouterTest extends TestCase
 
         // Test with object methods.
         $this->router
-            ->setClassRoute('GET', 'greeting', Example::class, 'greet')
+            ->setClassRoute('GET', 'greeting', Example::class, 'greet', 'Carl')
             ->setClassRoute('GET', 'farewell', Example::class, 'sayBye');
         $tests = [
-            ['greeting', 'Hello!'],
-            ['farewell', 'Goodbye!'],
+            ['greeting', 'Hello, Carl!'],
+            ['farewell', 'Goodbye, John!'],
         ];
         foreach ($tests as $test) {
             $route = $this->findRoute('GET', $test[0]);
@@ -242,13 +242,17 @@ class RouterTest extends TestCase
 
 class Example
 {
+    public function __construct(protected string $name = 'John')
+    {
+    }
+
     public function greet(): string
     {
-        return 'Hello!';
+        return "Hello, {$this->name}!";
     }
 
     public function sayBye(): string
     {
-        return 'Goodbye!';
+        return "Goodbye, {$this->name}!";
     }
 }

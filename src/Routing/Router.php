@@ -178,10 +178,17 @@ class Router
         string $path,
         string $class_name,
         string $class_method,
+        mixed ...$constructor_args,
     ): static {
-        // Store a new route class method.
+        // Get storage keys.
         $keys = $this->getRouteKeys($method, $path);
-        $route_callable = new RouteClassMethod($class_name, $class_method);
+
+        // Store callable object.
+        $route_callable = new RouteClassMethod(
+            $class_name,
+            $class_method,
+            ...$constructor_args,
+        );
         $this->routes->setValue($keys, $route_callable);
 
         return $this;
