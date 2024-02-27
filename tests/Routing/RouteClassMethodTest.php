@@ -43,11 +43,11 @@ class RouteClassMethodTest extends TestCase
 {
     /**
      * @covers ::__construct
-     * @uses Laucov\Http\Routing\Traits\RouteCallableTrait::validate
-     * @uses Laucov\Http\Routing\Traits\RouteCallableTrait::validateParameterTypes
-     * @uses Laucov\Http\Routing\Traits\RouteCallableTrait::validateReturnType
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
      */
-    public function testCanUseNonStaticMethods(): void
+    public function testCanUseInstanceAndStaticMethods(): void
     {
         // @todo Test static methods
 

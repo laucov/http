@@ -28,15 +28,11 @@
 
 namespace Laucov\Http\Routing;
 
-use Laucov\Http\Routing\Traits\RouteCallableTrait;
-
 /**
  * Stores information about an HTTP route.
  */
-class RouteClassMethod
+class RouteClassMethod extends AbstractRouteCallable
 {
-    use RouteCallableTrait;
-
     /**
      * Create the route closure instance.
      */

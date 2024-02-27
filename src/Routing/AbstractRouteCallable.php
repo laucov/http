@@ -26,16 +26,15 @@
  * @copyright © 2024 Laucov Serviços de Tecnologia da Informação Ltda.
  */
 
-namespace Laucov\Http\Routing\Traits;
+namespace Laucov\Http\Routing;
 
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
-use Laucov\Http\Routing\RouteClosureType;
 
 /**
- * Has properties and methods to analyze route callables.
+ * Analyzes and stores route callables.
  */
-trait RouteCallableTrait
+abstract class AbstractRouteCallable
 {
     /**
      * Allowed closure parameter types.
