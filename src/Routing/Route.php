@@ -37,22 +37,27 @@ use Laucov\Http\Message\ResponseInterface;
 class Route
 {
     /**
-     * Execution parameters.
-     */
-    protected array $parameters;
-
-    /**
      * Route closure.
+     * 
+     * @deprecated 2.0.0 Use `$routeCallable` instead.
      */
-    protected RouteClosure $routeClosure;
+    protected AbstractRouteCallable $routeClosure;
 
     /**
      * Create the route instance.
      */
-    public function __construct(RouteClosure $route_closure, array $parameters)
-    {
-        $this->routeClosure = $route_closure;
-        $this->parameters = $parameters;
+    public function __construct(
+        /**
+         * Route closure.
+         */
+        protected AbstractRouteCallable $routeCallable,
+
+        /**
+         * Execution parameters.
+         */
+        protected array $parameters,
+    ) {
+        $this->routeClosure = &$this->routeCallable;
     }
 
     /**

@@ -31,16 +31,32 @@ namespace Laucov\Http\Routing;
 /**
  * Stores information about an HTTP route.
  */
-class RouteClosure extends AbstractRouteCallable
+class RouteClassMethod extends AbstractRouteCallable
 {
     /**
      * Create the route closure instance.
      */
-    public function __construct(\Closure $closure)
-    {
-        // Assign properties.
-        $reflection = new \ReflectionFunction($closure);
-        $this->validate($reflection);
-        $this->closure = $closure;
+    public function __construct(
+        string $class_name,
+        string $method_name,
+        mixed ...$constructor_args,
+    ) {
+        // Validate and store types.
+        $reflection_c = new \ReflectionClass($class_name);
+        $reflection_m = $reflection_c->getMethod($method_name);
+        $this->validate($reflection_m);
+
+        // Create callback.
+        $this->closure = $reflection_m->isStatic()
+            ? \Closure::fromCallable([$class_name, $method_name])
+            : function (mixed ...$args) use (
+                $class_name,
+                $method_name,
+                $constructor_args,
+            ) {
+                // Instantiate and call method.
+                $object = new $class_name(...$constructor_args);
+                return $object->{$method_name}(...$args);
+            };
     }
 }

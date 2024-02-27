@@ -105,9 +105,9 @@ class Router
         }
 
         // Check if is a route closure.
-        if (!($result instanceof RouteClosure)) {
+        if (!($result instanceof AbstractRouteCallable)) {
             // @codeCoverageIgnoreStart
-            $message = 'Found an unexpected [%s] stored as a route closure.';
+            $message = 'Found an unexpected [%s] stored as a route callable.';
             throw new \RuntimeException(sprintf($message, gettype($result)));
             // @codeCoverageIgnoreEnd
         }
@@ -171,13 +171,66 @@ class Router
     }
 
     /**
+     * Store a route for the given class method.
+     */
+    public function setClassRoute(
+        string $method,
+        string $path,
+        string $class_name,
+        string $class_method,
+        mixed ...$constructor_args,
+    ): static {
+        // Get storage keys.
+        $keys = $this->getRouteKeys($method, $path);
+
+        // Store callable object.
+        $route_callable = new RouteClassMethod(
+            $class_name,
+            $class_method,
+            ...$constructor_args,
+        );
+        $this->routes->setValue($keys, $route_callable);
+
+        return $this;
+    }
+
+    /**
      * Store a route for the given closure.
+     */
+    public function setClosureRoute(
+        string $method,
+        string $path,
+        \Closure $callback,
+    ): static {
+        // Store a new route closure.
+        $keys = $this->getRouteKeys($method, $path);
+        $route_callable = new RouteClosure($callback);
+        $this->routes->setValue($keys, $route_callable);
+        
+        return $this;
+    }
+
+    /**
+     * Store a route for the given closure.
+     * 
+     * @codeCoverageIgnore
+     * @deprecated 2.0.0 Use `setClosureRoute()` instead.
      */
     public function setRoute(
         string $method,
         string $path,
         \Closure $callback,
     ): static {
+        return $this->setClosureRoute($method, $path, $callback);
+    }
+
+    /**
+     * Get route keys for a given path.
+     * 
+     * @return array<string>
+     */
+    protected function getRouteKeys(string $method, string $path): array
+    {
         // Get prefix segments.
         $prefix = implode('/', $this->prefixes);
         $prefix_segments = strlen($prefix) > 0 ? explode('/', $prefix) : [];
@@ -187,11 +240,6 @@ class Router
         $segments = $path ? explode('/', $path) : [];
         $segments[] = '/';
 
-        // Store a new route closure.
-        $keys = [$method, ...$prefix_segments, ...$segments];
-        $route_closure = new RouteClosure($callback);
-        $this->routes->setValue($keys, $route_closure);
-        
-        return $this;
+        return [$method, ...$prefix_segments, ...$segments];
     }
 }

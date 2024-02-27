@@ -43,8 +43,9 @@ class RouteClosureTest extends TestCase
 {
     /**
      * @covers ::__construct
-     * @uses Laucov\Http\Routing\RouteClosure::findClosureParameterTypes
-     * @uses Laucov\Http\Routing\RouteClosure::findClosureReturnType
+     * @uses Laucov\Http\Routing\RouteClosure::validate
+     * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
+     * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      */
     public function testCanAccessClosureAndParameterTypesAndReturnType(): void
     {
@@ -63,8 +64,9 @@ class RouteClosureTest extends TestCase
 
     /**
      * @covers ::__construct
-     * @covers ::findClosureParameterTypes
-     * @uses Laucov\Http\Routing\RouteClosure::findClosureReturnType
+     * @covers ::validate
+     * @covers ::validateParameterTypes
+     * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      */
     public function testClosureMustNotReceiveUnionOrIntersectionTypes(): void
     {
@@ -76,8 +78,9 @@ class RouteClosureTest extends TestCase
 
     /**
      * @covers ::__construct
-     * @covers ::findClosureReturnType
-     * @uses Laucov\Http\Routing\RouteClosure::findClosureParameterTypes
+     * @covers ::validate
+     * @covers ::validateReturnType
+     * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
      */
     public function testClosureMustNotReturnUnionOrIntersectionTypes(): void
     {
@@ -87,8 +90,9 @@ class RouteClosureTest extends TestCase
 
     /**
      * @covers ::__construct
-     * @covers ::findClosureParameterTypes
-     * @uses Laucov\Http\Routing\RouteClosure::findClosureReturnType
+     * @covers ::validate
+     * @covers ::validateParameterTypes
+     * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      */
     public function testClosureMustReceiveStringsOrRequests(): void
     {
@@ -109,8 +113,9 @@ class RouteClosureTest extends TestCase
 
     /**
      * @covers ::__construct
-     * @covers ::findClosureReturnType
-     * @uses Laucov\Http\Routing\RouteClosure::findClosureParameterTypes
+     * @covers ::validate
+     * @covers ::validateReturnType
+     * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
      */
     public function testClosureMustReturnStringOrStringableOrResponse(): void
     {
