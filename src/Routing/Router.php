@@ -105,9 +105,9 @@ class Router
         }
 
         // Check if is a route closure.
-        if (!($result instanceof RouteClosure)) {
+        if (!($result instanceof AbstractRouteCallable)) {
             // @codeCoverageIgnoreStart
-            $message = 'Found an unexpected [%s] stored as a route closure.';
+            $message = 'Found an unexpected [%s] stored as a route callable.';
             throw new \RuntimeException(sprintf($message, gettype($result)));
             // @codeCoverageIgnoreEnd
         }
@@ -170,22 +170,22 @@ class Router
         return $this;
     }
 
-    // /**
-    //  * Store a route for the given class method.
-    //  */
-    // public function setClassRoute(
-    //     string $method,
-    //     string $path,
-    //     string $class_name,
-    //     string $class_method,
-    // ): static {
-    //     // Store a new route class method.
-    //     $keys = $this->getRouteKeys($method, $path);
-    //     $route_closure = new RouteClassMethod($class_name, $class_method);
-    //     $this->routes->setValue($keys, $route_closure);
+    /**
+     * Store a route for the given class method.
+     */
+    public function setClassRoute(
+        string $method,
+        string $path,
+        string $class_name,
+        string $class_method,
+    ): static {
+        // Store a new route class method.
+        $keys = $this->getRouteKeys($method, $path);
+        $route_callable = new RouteClassMethod($class_name, $class_method);
+        $this->routes->setValue($keys, $route_callable);
 
-    //     return $this;
-    // }
+        return $this;
+    }
 
     /**
      * Store a route for the given closure.
@@ -197,8 +197,8 @@ class Router
     ): static {
         // Store a new route closure.
         $keys = $this->getRouteKeys($method, $path);
-        $route_closure = new RouteClosure($callback);
-        $this->routes->setValue($keys, $route_closure);
+        $route_callable = new RouteClosure($callback);
+        $this->routes->setValue($keys, $route_callable);
         
         return $this;
     }

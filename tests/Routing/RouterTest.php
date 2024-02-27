@@ -54,6 +54,7 @@ class RouterTest extends TestCase
      * @covers ::getRouteKeys
      * @covers ::popPrefix
      * @covers ::pushPrefix
+     * @covers ::setClassRoute
      * @covers ::setClosureRoute
      * @covers ::setPattern
      * @uses Laucov\Arrays\ArrayBuilder::setValue
@@ -70,12 +71,13 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Message\IncomingRequest::__construct
      * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
      * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
      * @uses Laucov\Http\Routing\Route::__construct
      * @uses Laucov\Http\Routing\Route::run
+     * @uses Laucov\Http\Routing\RouteClassMethod::__construct
      * @uses Laucov\Http\Routing\RouteClosure::__construct
-     * @uses Laucov\Http\Routing\RouteClosure::validate
-     * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
-     * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      * @uses Laucov\Http\Routing\Router::__construct
      */
     public function testCanSetAndFindRoutes(): void
@@ -204,20 +206,20 @@ class RouterTest extends TestCase
             $this->assertSame($test[1], $content);
         }
 
-        // // Test with object methods.
-        // $this->router
-        //     ->setClassRoute('GET', 'greeting', Example::class, 'greet')
-        //     ->setClassRoute('GET', 'farewell', Example::class, 'sayBye');
-        // $tests = [
-        //     ['greeting', 'Hello!'],
-        //     ['farewell', 'Goodbye!'],
-        // ];
-        // foreach ($tests as $test) {
-        //     $route = $this->findRoute('GET', $test[0]);
-        //     $this->assertInstanceOf(Route::class, $route);
-        //     $content = (string) $route->run()->getBody();
-        //     $this->assertSame($test[1], $content);
-        // }
+        // Test with object methods.
+        $this->router
+            ->setClassRoute('GET', 'greeting', Example::class, 'greet')
+            ->setClassRoute('GET', 'farewell', Example::class, 'sayBye');
+        $tests = [
+            ['greeting', 'Hello!'],
+            ['farewell', 'Goodbye!'],
+        ];
+        foreach ($tests as $test) {
+            $route = $this->findRoute('GET', $test[0]);
+            $this->assertInstanceOf(Route::class, $route);
+            $content = (string) $route->run()->getBody();
+            $this->assertSame($test[1], $content);
+        }
     }
 
     /**
@@ -243,5 +245,10 @@ class Example
     public function greet(): string
     {
         return 'Hello!';
+    }
+
+    public function sayBye(): string
+    {
+        return 'Goodbye!';
     }
 }
