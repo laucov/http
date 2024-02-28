@@ -87,6 +87,10 @@ abstract class AbstractRouteCallable
     ): void {
         // Get the ReflectionType object and check if is a named type.
         $return_type = $reflection->getReturnType();
+        if ($return_type === null) {
+            $message = 'Route callables must have a return type.';
+            throw new \InvalidArgumentException($message);
+        }
         if (!($return_type instanceof \ReflectionNamedType)) {
             $message = 'Route callables must not return union or '
                     . 'intersection types.';

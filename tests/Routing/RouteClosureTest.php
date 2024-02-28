@@ -112,6 +112,18 @@ class RouteClosureTest extends TestCase
     }
 
     /**
+     * @covers ::validateReturnType
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
+     * @uses Laucov\Http\Routing\RouteClosure::__construct
+     */
+    public function testClosureMustHaveAReturnType(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new RouteClosure(fn () => 'Guess my return type >:D');
+    }
+
+    /**
      * @covers ::__construct
      * @covers ::validate
      * @covers ::validateReturnType
