@@ -145,14 +145,22 @@ class RouterTest extends TestCase
             ServerInfo $d,
         ): string {
             $host = $b->getUri()->host;
-            $prot = $d->get('SERVER_PROTOCOL');
+            $prot = $d->get('SERVER_PROTOCOL') ?? '???';
             return "{$a}, {$host}, {$c}, {$prot}";
         };
         $this->router->setClosureRoute('POST', 'routes/:int/test/:alpha', $closure_g);
-        $route_g = $this->findRoute('POST', 'routes/123/test/abc');
-        $this->assertInstanceOf(Route::class, $route_g);
-        $content_g = (string) $route_g->run()->getBody();
-        $this->assertSame('123, foobar.com, abc, HTTP/1.1', $content_g);
+        $route_g1 = $this->findRoute('POST', 'routes/123/test/abc');
+        $this->assertInstanceOf(Route::class, $route_g1);
+        $this->assertSame(
+            '123, foobar.com, abc, HTTP/1.1',
+            (string) $route_g1->run()->getBody(),
+        );
+        $route_g2 = $this->findRoute('POST', 'routes/123/test/abc', false);
+        $this->assertInstanceOf(Route::class, $route_g2);
+        $this->assertSame(
+            '123, foobar.com, abc, ???',
+            (string) $route_g2->run()->getBody(),
+        );
 
         // Test with variadic string argument.
         $closure_h = function (string $a, string ...$b): string {
@@ -225,8 +233,11 @@ class RouterTest extends TestCase
     /**
      * Find a route using a generic request with the given method and path.
      */
-    protected function findRoute(string $method, string $path): null|Route
-    {
+    protected function findRoute(
+        string $method,
+        string $path,
+        bool $create_server_info = true,
+    ): null|Route {
         $request = new IncomingRequest(
             content_or_post: 'Hello, World!',
             headers: [],
@@ -236,9 +247,9 @@ class RouterTest extends TestCase
             parameters: [],
         );
 
-        $server = new ServerInfo([
-            'SERVER_PROTOCOL' => 'HTTP/1.1',
-        ]);
+        $server = $create_server_info
+            ? new ServerInfo(['SERVER_PROTOCOL' => 'HTTP/1.1'])
+            : null;
 
         return $this->router->findRoute($request, $server);
     }
