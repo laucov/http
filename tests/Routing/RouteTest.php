@@ -61,8 +61,7 @@ class RouteTest extends TestCase
 
         // Create closure with Stringable return type.
         $closure_b = new RouteClosure(function (string $b): \Stringable {
-            return new class ($b) implements \Stringable
-            {
+            return new class ($b) implements \Stringable {
                 public function __construct(protected string $b)
                 {
                 }

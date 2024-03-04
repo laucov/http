@@ -34,6 +34,7 @@ use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Routing\RouteClosure;
+use Laucov\Http\Server\ServerInfo;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -94,13 +95,16 @@ class RouteClosureTest extends TestCase
      * @covers ::validateParameterTypes
      * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      */
-    public function testClosureMustReceiveStringsOrRequests(): void
+    public function testClosureMustReceiveStringsOrRequestsOrServerInfo(): void
     {
         // Test valid closures.
         new RouteClosure(function (RequestInterface $a, string $b): string {
             return 'Hello, World!';
         });
         new RouteClosure(function (string $a, string ...$b): string {
+            return 'Hello, World!';
+        });
+        new RouteClosure(function (ServerInfo $a, string $b): string {
             return 'Hello, World!';
         });
 
@@ -132,10 +136,8 @@ class RouteClosureTest extends TestCase
     public function testClosureMustReturnStringOrStringableOrResponse(): void
     {
         // Create closure with Stringable return type.
-        $closure_a = function (): \Stringable
-        {
-            return new class implements \Stringable
-            {
+        $closure_a = function (): \Stringable {
+            return new class () implements \Stringable {
                 public function __toString(): string
                 {
                     return 'Hello, World!';
@@ -144,8 +146,7 @@ class RouteClosureTest extends TestCase
         };
 
         // Create closure with ResponseInterface return type.
-        $closure_b = function (): ResponseInterface
-        {
+        $closure_b = function (): ResponseInterface {
             $response = new OutgoingResponse();
             return $response->setBody('Hello, World!');
         };

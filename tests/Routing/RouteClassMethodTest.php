@@ -30,9 +30,6 @@ declare(strict_types=1);
 
 namespace Tests\Routing;
 
-use Laucov\Http\Message\OutgoingResponse;
-use Laucov\Http\Message\RequestInterface;
-use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Routing\RouteClassMethod;
 use PHPUnit\Framework\TestCase;
 
@@ -49,8 +46,6 @@ class RouteClassMethodTest extends TestCase
      */
     public function testCanUseInstanceAndStaticMethods(): void
     {
-        // @todo Test static methods
-
         // Test simple method.
         $test_a = new RouteClassMethod(A::class, 'a');
         $this->assertSame('A!', ($test_a->closure)());
@@ -92,7 +87,8 @@ class B
     }
 
     public function __construct(protected string $greeting)
-    {}
+    {
+    }
 
     public function greet(string $name): string
     {

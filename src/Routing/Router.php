@@ -30,6 +30,7 @@ namespace Laucov\Http\Routing;
 
 use Laucov\Arrays\ArrayBuilder;
 use Laucov\Http\Message\RequestInterface;
+use Laucov\Http\Server\ServerInfo;
 
 /**
  * Stores routes and assign them to HTTP requests.
@@ -66,8 +67,10 @@ class Router
     /**
      * Find a route for the given request object.
      */
-    public function findRoute(RequestInterface $request): null|Route
-    {
+    public function findRoute(
+        RequestInterface $request,
+        null|ServerInfo $server = null,
+    ): null|Route {
         // Get method and routes.
         $method = $request->getMethod();
         $routes = (array) $this->routes->getValue($method, []);
@@ -130,10 +133,13 @@ class Router
             } elseif (is_a($type->name, RequestInterface::class, true)) {
                 // Add request dependency.
                 $parameters[] = $request;
+            } elseif (is_a($type->name, ServerInfo::class, true)) {
+                // Add server info dependency.
+                $parameters[] = $server;
             } else {
                 // @codeCoverageIgnoreStart
                 $message = 'Unexpected route closure parameter of type [%s].';
-                throw new \RuntimeException(sprintf($message, $type));
+                throw new \RuntimeException(sprintf($message, $type->name));
                 // @codeCoverageIgnoreEnd
             }
         }
@@ -206,7 +212,7 @@ class Router
         $keys = $this->getRouteKeys($method, $path);
         $route_callable = new RouteClosure($callback);
         $this->routes->setValue($keys, $route_callable);
-        
+
         return $this;
     }
 
