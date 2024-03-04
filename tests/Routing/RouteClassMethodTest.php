@@ -87,7 +87,8 @@ class B
     }
 
     public function __construct(protected string $greeting)
-    {}
+    {
+    }
 
     public function greet(string $name): string
     {

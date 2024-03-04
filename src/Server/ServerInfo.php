@@ -27,6 +27,7 @@
  */
 
 namespace Laucov\Http\Server;
+
 use Laucov\Files\Resource\Uri;
 
 /**

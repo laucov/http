@@ -120,7 +120,7 @@ abstract class AbstractRouteCallable
     ): void {
         // Initialize type array.
         $types = [];
-        
+
         // Get and validate parameters.
         $parameters = $reflection->getParameters();
         foreach ($parameters as $parameter) {

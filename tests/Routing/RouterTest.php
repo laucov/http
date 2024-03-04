@@ -81,7 +81,7 @@ class RouterTest extends TestCase
     public function testCanSetAndFindRoutes(): void
     {
         // Set route.
-        $closure_a = fn(): string => 'Output A';
+        $closure_a = fn (): string => 'Output A';
         $this->assertSame(
             $this->router,
             $this->router->setClosureRoute('GET', 'path/to/route-a', $closure_a),
@@ -100,17 +100,17 @@ class RouterTest extends TestCase
         $this->assertNull($this->findRoute('POST', 'path/to/route-a'));
 
         // Test router's path trimming.
-        $closure_b = fn(): string => 'Output B';
+        $closure_b = fn (): string => 'Output B';
         $this->router->setClosureRoute('POST', 'path/to/route-b/', $closure_b);
         $route_b = $this->findRoute('POST', 'path/to/route-b');
         $this->assertInstanceOf(Route::class, $route_b);
         $this->assertSame('Output B', (string) $route_b->run()->getBody());
-        $closure_c = fn(): string => 'Output C';
+        $closure_c = fn (): string => 'Output C';
         $this->router->setClosureRoute('PUT', '/path/to/route-c', $closure_c);
         $route_c = $this->findRoute('PUT', 'path/to/route-c');
         $this->assertInstanceOf(Route::class, $route_c);
         $this->assertSame('Output C', (string) $route_c->run()->getBody());
-        $closure_d = fn(): string => 'Output D';
+        $closure_d = fn (): string => 'Output D';
         $this->router->setClosureRoute('PATCH', '/path/to/route-d/', $closure_d);
         $route_d = $this->findRoute('PATCH', 'path/to/route-d');
         $this->assertInstanceOf(Route::class, $route_d);
@@ -124,14 +124,14 @@ class RouterTest extends TestCase
         $this->router->setPattern('alpha', '/^[A-Za-z]+$/');
 
         // Test without parameters.
-        $closure_e = fn(): string => 'Output E';
+        $closure_e = fn (): string => 'Output E';
         $this->router->setClosureRoute('POST', 'routes/:alpha', $closure_e);
         $route_e = $this->findRoute('POST', 'routes/e');
         $this->assertInstanceOf(Route::class, $route_e);
         $this->assertSame('Output E', (string) $route_e->run()->getBody());
 
         // Test with parameters.
-        $closure_f = fn(string $a): string => sprintf('Output %s', $a);
+        $closure_f = fn (string $a): string => sprintf('Output %s', $a);
         $this->router->setClosureRoute('GET', 'routes/:int', $closure_f);
         $route_f = $this->findRoute('GET', 'routes/123');
         $this->assertInstanceOf(Route::class, $route_f);

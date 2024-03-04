@@ -212,7 +212,7 @@ class Router
         $keys = $this->getRouteKeys($method, $path);
         $route_callable = new RouteClosure($callback);
         $this->routes->setValue($keys, $route_callable);
-        
+
         return $this;
     }
 
