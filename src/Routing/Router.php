@@ -135,6 +135,9 @@ class Router
                 $parameters[] = $request;
             } elseif (is_a($type->name, ServerInfo::class, true)) {
                 // Add server info dependency.
+                if ($server === null) {
+                    $server = new ServerInfo([]);
+                }
                 $parameters[] = $server;
             } else {
                 // @codeCoverageIgnoreStart
