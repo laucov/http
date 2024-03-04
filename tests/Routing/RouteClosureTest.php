@@ -34,6 +34,7 @@ use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Routing\RouteClosure;
+use Laucov\Http\Server\ServerInfo;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -94,13 +95,16 @@ class RouteClosureTest extends TestCase
      * @covers ::validateParameterTypes
      * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      */
-    public function testClosureMustReceiveStringsOrRequests(): void
+    public function testClosureMustReceiveStringsOrRequestsOrServerInfo(): void
     {
         // Test valid closures.
         new RouteClosure(function (RequestInterface $a, string $b): string {
             return 'Hello, World!';
         });
         new RouteClosure(function (string $a, string ...$b): string {
+            return 'Hello, World!';
+        });
+        new RouteClosure(function (ServerInfo $a, string $b): string {
             return 'Hello, World!';
         });
 

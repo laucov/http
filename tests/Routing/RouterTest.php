@@ -34,6 +34,7 @@ use Laucov\Http\Message\IncomingRequest;
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Routing\Route;
 use Laucov\Http\Routing\Router;
+use Laucov\Http\Server\ServerInfo;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -42,11 +43,6 @@ use PHPUnit\Framework\TestCase;
 class RouterTest extends TestCase
 {
     protected Router $router;
-
-    protected function setUp(): void
-    {
-        $this->router = new Router();
-    }
 
     /**
      * @covers ::__construct
@@ -79,6 +75,8 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\RouteClassMethod::__construct
      * @uses Laucov\Http\Routing\RouteClosure::__construct
      * @uses Laucov\Http\Routing\Router::__construct
+     * @uses Laucov\Http\Server\ServerInfo::__construct
+     * @uses Laucov\Http\Server\ServerInfo::get
      */
     public function testCanSetAndFindRoutes(): void
     {
@@ -139,20 +137,22 @@ class RouterTest extends TestCase
         $this->assertInstanceOf(Route::class, $route_f);
         $this->assertSame('Output 123', (string) $route_f->run()->getBody());
 
-        // Test with request argument.
+        // Test with request and server info argument.
         $closure_g = function (
             string $a,
             RequestInterface $b,
             string $c,
+            ServerInfo $d,
         ): string {
             $host = $b->getUri()->host;
-            return "{$a}, {$host}, {$c}";
+            $prot = $d->get('SERVER_PROTOCOL');
+            return "{$a}, {$host}, {$c}, {$prot}";
         };
         $this->router->setClosureRoute('POST', 'routes/:int/test/:alpha', $closure_g);
         $route_g = $this->findRoute('POST', 'routes/123/test/abc');
         $this->assertInstanceOf(Route::class, $route_g);
         $content_g = (string) $route_g->run()->getBody();
-        $this->assertSame('123, foobar.com, abc', $content_g);
+        $this->assertSame('123, foobar.com, abc, HTTP/1.1', $content_g);
 
         // Test with variadic string argument.
         $closure_h = function (string $a, string ...$b): string {
@@ -236,7 +236,16 @@ class RouterTest extends TestCase
             parameters: [],
         );
 
-        return $this->router->findRoute($request);
+        $server = new ServerInfo([
+            'SERVER_PROTOCOL' => 'HTTP/1.1',
+        ]);
+
+        return $this->router->findRoute($request, $server);
+    }
+
+    protected function setUp(): void
+    {
+        $this->router = new Router();
     }
 }
 

@@ -30,6 +30,7 @@ namespace Laucov\Http\Routing;
 
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
+use Laucov\Http\Server\ServerInfo;
 
 /**
  * Analyzes and stores route callables.
@@ -42,6 +43,7 @@ abstract class AbstractRouteCallable
     public const ALLOWED_PARAMETER_TYPES = [
         'string',
         RequestInterface::class,
+        ServerInfo::class,
     ];
 
     /**
