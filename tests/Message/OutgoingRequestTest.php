@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace Tests\Message;
 
 use Laucov\Arrays\ArrayBuilder;
+use Laucov\Http\Cookie\RequestCookie;
 use Laucov\Http\Message\OutgoingRequest;
 use Laucov\Files\Resource\Uri;
 use PHPUnit\Framework\TestCase;
@@ -69,6 +70,22 @@ class OutgoingRequestTest extends TestCase
     {
         $variables = $this->request->getPostVariables();
         $this->assertInstanceOf(ArrayBuilder::class, $variables);
+    }
+
+    /**
+     * @covers ::getCookie
+     * @covers ::setCookie
+     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
+     * @uses Laucov\Http\Message\OutgoingRequest::__construct
+     */
+    public function testCanSetCookies(): void
+    {
+        $this->request->setCookie(new RequestCookie('foo', 'bar'));
+        $cookie = $this->request->getCookie('foo');
+        $this->assertInstanceOf(RequestCookie::class, $cookie);
+        $this->assertSame('foo', $cookie->name);
+        $this->assertSame('bar', $cookie->value);
+        $this->assertNull($this->request->getCookie('baz'));
     }
 
     /**
