@@ -55,6 +55,7 @@ class AbstractIncomingMessageTest extends TestCase
                 'Cache-Control' => 'must-understand, no-store',
                 'Content-Length' => '44',
             ],
+            'protocol_version' => null,
         ]);
 
         // Check body.
@@ -84,6 +85,7 @@ class AbstractIncomingMessageTest extends TestCase
                 'Cache-Control' => ['must-understand', 'no-store'],
                 'Content-Length' => 44,
             ],
+            'protocol_version' => null,
         ]);
     }
 

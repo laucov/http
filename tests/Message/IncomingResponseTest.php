@@ -55,6 +55,7 @@ class IncomingResponseTest extends TestCase
             headers: [
                 'Authorization' => 'Basic user:password',
             ],
+            protocol_version: null,
             status_code: 401,
             status_text: 'Unauthorized',
         );
