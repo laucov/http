@@ -29,18 +29,26 @@
 namespace Laucov\Http\Cookie;
 
 /**
- * Stores data for a request cookie, usually sent in the "Cookie" header.
+ * Represents a "SameSite" directive option.
  */
-class RequestCookie extends AbstractCookie
+enum SameSite: string
 {
     /**
-     * Get the cookie string representation.
+     * Send the cookie only for same-site requests.
+     * 
+     * Don't send when navigating to the origin site from an external site.
      */
-    public function __toString(): string
-    {
-        $name = rawurlencode($this->name);
-        $value = rawurlencode($this->value);
+    case STRICT = 'Strict';
 
-        return "{$name}={$value}";
-    }
+    /**
+     * Send the cookie only for same-site requests.
+     * 
+     * Send when navigating to the origin site from an external site.
+     */
+    case LAX = 'Lax';
+
+    /**
+     * Send the cookie both for same-site and cross-site requests.
+     */
+    case NONE = 'None';
 }
