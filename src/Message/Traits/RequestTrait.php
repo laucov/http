@@ -29,12 +29,20 @@
 namespace Laucov\Http\Message\Traits;
 
 use Laucov\Files\Resource\Uri;
+use Laucov\Http\Cookie\RequestCookie;
 
 /**
  * Has properties and methods common to request objects.
  */
 trait RequestTrait
 {
+    /**
+     * Cookies.
+     * 
+     * @var array<string, RequestCookie>
+     */
+    protected array $cookies = [];
+
     /**
      * HTTP method.
      */
@@ -44,6 +52,14 @@ trait RequestTrait
      * URI object.
      */
     protected null|Uri $uri = null;
+
+    /**
+     * Get a registered cookie.
+     */
+    public function getCookie(string $name): null|RequestCookie
+    {
+        return $this->cookies[$name] ?? null;
+    }
 
     /**
      * Get the request method.
