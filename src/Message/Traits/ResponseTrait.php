@@ -28,11 +28,20 @@
 
 namespace Laucov\Http\Message\Traits;
 
+use Laucov\Http\Cookie\ResponseCookie;
+
 /**
  * Has properties and methods common to response objects.
  */
 trait ResponseTrait
 {
+    /**
+     * Cookies.
+     * 
+     * @var array<string, ResponseCookie>
+     */
+    protected array $cookies = [];
+
     /**
      * HTTP status code.
      */
@@ -42,6 +51,14 @@ trait ResponseTrait
      * HTTP status text.
      */
     protected string $statusText = 'OK';
+
+    /**
+     * Get a registered cookie.
+     */
+    public function getCookie(string $name): null|ResponseCookie
+    {
+        return $this->cookies[$name] ?? null;
+    }
 
     /**
      * Get the response status code.

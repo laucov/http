@@ -26,27 +26,21 @@
  * @copyright © 2024 Laucov Serviços de Tecnologia da Informação Ltda.
  */
 
-namespace Laucov\Http\Message;
-
-use Laucov\Http\Cookie\ResponseCookie;
+namespace Laucov\Http\Cookie;
 
 /**
- * Stores information about an HTTP request.
+ * Stores data for a request cookie, usually sent in the "Cookie" header.
  */
-interface ResponseInterface extends MessageInterface
+class RequestCookie extends AbstractCookie
 {
     /**
-     * Get a registered cookie.
+     * Get the cookie string representation.
      */
-    public function getCookie(string $name): null|ResponseCookie;
+    public function __toString(): string
+    {
+        $name = rawurlencode($this->name);
+        $value = rawurlencode($this->value);
 
-    /**
-     * Get the response status code.
-     */
-    public function getStatusCode(): int;
-
-    /**
-     * Get the response status text.
-     */
-    public function getStatusText(): string;
+        return "{$name}={$value}";
+    }
 }

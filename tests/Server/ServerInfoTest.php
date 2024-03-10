@@ -28,7 +28,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Routing;
+namespace Tests\Server;
 
 use Laucov\Http\Server\ServerInfo;
 use PHPUnit\Framework\TestCase;

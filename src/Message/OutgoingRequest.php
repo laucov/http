@@ -29,6 +29,7 @@
 namespace Laucov\Http\Message;
 
 use Laucov\Arrays\ArrayBuilder;
+use Laucov\Http\Cookie\RequestCookie;
 use Laucov\Http\Message\Traits\RequestTrait;
 use Laucov\Files\Resource\Uri;
 
@@ -73,6 +74,15 @@ class OutgoingRequest extends AbstractOutgoingMessage implements
     public function getPostVariables(): ArrayBuilder
     {
         return $this->postVariables;
+    }
+
+    /**
+     * Set a cookie.
+     */
+    public function setCookie(RequestCookie $cookie): static
+    {
+        $this->cookies[$cookie->name] = $cookie;
+        return $this;
     }
 
     /**

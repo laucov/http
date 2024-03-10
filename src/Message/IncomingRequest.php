@@ -29,6 +29,7 @@
 namespace Laucov\Http\Message;
 
 use Laucov\Arrays\ArrayReader;
+use Laucov\Http\Cookie\RequestCookie;
 use Laucov\Http\Message\Traits\RequestTrait;
 use Laucov\Files\Resource\Uri;
 
@@ -55,25 +56,36 @@ class IncomingRequest extends AbstractIncomingMessage implements
      */
     public function __construct(
         mixed $content_or_post,
-        array $headers,
-        null|string $protocol_version,
-        string $method,
-        string|Uri $uri,
-        array $parameters,
+        array $headers = [],
+        null|string $protocol_version = null,
+        string $method = 'GET',
+        string|Uri $uri = '/',
+        array $parameters = [],
+        array $cookies = [],
     ) {
         // Set parameters.
         $this->parameters = new ArrayReader($parameters);
-        $this->protocolVersion = $protocol_version;
         $this->method = $method;
         $this->uri = is_string($uri) ? Uri::fromString($uri) : $uri;
 
         // Set POST variables and run the parent's constructor.
         if (is_array($content_or_post)) {
             $this->postVariables = new ArrayReader($content_or_post);
-            parent::__construct('', $headers);
+            parent::__construct('', $headers, $protocol_version);
         } else {
             $this->postVariables = new ArrayReader([]);
-            parent::__construct($content_or_post, $headers);
+            parent::__construct($content_or_post, $headers, $protocol_version);
+        }
+
+        // Set cookies.
+        foreach ($cookies as $name => $value) {
+            if (!is_string($value)) {
+                $msg = 'All cookie values must be strings. Found a value '
+                    . "of type %s in cookie named \"{$name}\".";
+                $type = gettype($value);
+                throw new \InvalidArgumentException(sprintf($msg, $type));
+            }
+            $this->cookies[$name] = new RequestCookie($name, $value);
         }
     }
 

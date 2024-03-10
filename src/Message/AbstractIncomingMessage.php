@@ -38,8 +38,11 @@ class AbstractIncomingMessage extends AbstractMessage
     /**
      * Create the incoming message instance.
      */
-    public function __construct(mixed $content, array $headers)
-    {
+    public function __construct(
+        mixed $content,
+        array $headers = [],
+        null|string $protocol_version = null,
+    ) {
         // Set body.
         $this->body = new StringSource($content);
 
@@ -51,5 +54,8 @@ class AbstractIncomingMessage extends AbstractMessage
             }
             $this->headers[$name] = $value;
         }
+
+        // Set protocol version.
+        $this->protocolVersion = $protocol_version;
     }
 }

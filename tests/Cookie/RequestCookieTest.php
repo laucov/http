@@ -26,27 +26,35 @@
  * @copyright © 2024 Laucov Serviços de Tecnologia da Informação Ltda.
  */
 
-namespace Laucov\Http\Message;
+declare(strict_types=1);
 
-use Laucov\Http\Cookie\ResponseCookie;
+namespace Tests\Cookie;
+
+use Laucov\Http\Cookie\RequestCookie;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Stores information about an HTTP request.
+ * @coversDefaultClass \Laucov\Http\Cookie\RequestCookie
  */
-interface ResponseInterface extends MessageInterface
+class RequestCookieTest extends TestCase
 {
     /**
-     * Get a registered cookie.
+     * @covers ::__construct
+     * @covers ::__toString
      */
-    public function getCookie(string $name): null|ResponseCookie;
+    public function testCanCreateAndGetString(): void
+    {
+        // Create instance.
+        $cookie = new RequestCookie('foo', 'bar');
+        $this->assertSame('foo', $cookie->name);
+        $this->assertSame('bar', $cookie->value);
 
-    /**
-     * Get the response status code.
-     */
-    public function getStatusCode(): int;
+        // Get cookie string.
+        $this->assertSame('foo=bar', strval($cookie));
 
-    /**
-     * Get the response status text.
-     */
-    public function getStatusText(): string;
+        // Test with escapable characters.
+        $cookie = new RequestCookie('usuário', 'João da Silva');
+        $expected = 'usu%C3%A1rio=Jo%C3%A3o%20da%20Silva';
+        $this->assertSame($expected, strval($cookie));
+    }
 }

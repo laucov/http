@@ -245,6 +245,7 @@ class RouterTest extends TestCase
             method: $method,
             uri: 'http://foobar.com/' . $path,
             parameters: [],
+            cookies: [],
         );
 
         $server = $create_server_info

@@ -28,6 +28,7 @@
 
 namespace Laucov\Http\Message;
 
+use Laucov\Http\Cookie\ResponseCookie;
 use Laucov\Http\Message\Traits\ResponseTrait;
 
 /**
@@ -37,6 +38,15 @@ class OutgoingResponse extends AbstractOutgoingMessage implements
     ResponseInterface
 {
     use ResponseTrait;
+
+    /**
+     * Set a cookie.
+     */
+    public function setCookie(ResponseCookie $cookie): static
+    {
+        $this->cookies[$cookie->name] = $cookie;
+        return $this;
+    }
 
     /**
      * Set status code and text.

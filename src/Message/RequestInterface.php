@@ -30,12 +30,18 @@ namespace Laucov\Http\Message;
 
 use Laucov\Arrays\ArrayReader;
 use Laucov\Files\Resource\Uri;
+use Laucov\Http\Cookie\RequestCookie;
 
 /**
  * Stores information about an HTTP request.
  */
 interface RequestInterface extends MessageInterface
 {
+    /**
+     * Get a registered cookie.
+     */
+    public function getCookie(string $name): null|RequestCookie;
+
     /**
      * Get the request method.
      */

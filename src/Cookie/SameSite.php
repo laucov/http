@@ -26,27 +26,29 @@
  * @copyright © 2024 Laucov Serviços de Tecnologia da Informação Ltda.
  */
 
-namespace Laucov\Http\Message;
-
-use Laucov\Http\Cookie\ResponseCookie;
+namespace Laucov\Http\Cookie;
 
 /**
- * Stores information about an HTTP request.
+ * Represents a "SameSite" directive option.
  */
-interface ResponseInterface extends MessageInterface
+enum SameSite: string
 {
     /**
-     * Get a registered cookie.
+     * Send the cookie only for same-site requests.
+     * 
+     * Don't send when navigating to the origin site from an external site.
      */
-    public function getCookie(string $name): null|ResponseCookie;
+    case STRICT = 'Strict';
 
     /**
-     * Get the response status code.
+     * Send the cookie only for same-site requests.
+     * 
+     * Send when navigating to the origin site from an external site.
      */
-    public function getStatusCode(): int;
+    case LAX = 'Lax';
 
     /**
-     * Get the response status text.
+     * Send the cookie both for same-site and cross-site requests.
      */
-    public function getStatusText(): string;
+    case NONE = 'None';
 }

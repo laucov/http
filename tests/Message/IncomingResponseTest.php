@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace Tests\Message;
 
+use Laucov\Http\Cookie\ResponseCookie;
 use Laucov\Http\Message\IncomingResponse;
 use PHPUnit\Framework\TestCase;
 
@@ -42,26 +43,54 @@ class IncomingResponseTest extends TestCase
      * @covers ::__construct
      * @uses Laucov\Files\Resource\StringSource::__construct
      * @uses Laucov\Files\Resource\StringSource::read
+     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
+     * @uses Laucov\Http\Cookie\ResponseCookie::__construct
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\AbstractMessage::getHeader
+     * @uses Laucov\Http\Message\Traits\ResponseTrait::getCookie
      * @uses Laucov\Http\Message\Traits\ResponseTrait::getStatusCode
      * @uses Laucov\Http\Message\Traits\ResponseTrait::getStatusText
      */
     public function testCanInstantiate(): void
     {
+        $cookie_a = new ResponseCookie('cookie-1', 'Cookie 1 text');
+        $cookie_b = new ResponseCookie('cookie-2', 'Cookie 2 text');
         $response = new IncomingResponse(
             content: 'Some message.',
             headers: [
                 'Authorization' => 'Basic user:password',
             ],
+            protocol_version: null,
             status_code: 401,
             status_text: 'Unauthorized',
+            cookies: [$cookie_a, $cookie_b],
         );
         $this->assertSame('Some message.', $response->getBody()->read(13));
         $this->assertSame(401, $response->getStatusCode());
         $this->assertSame('Unauthorized', $response->getStatusText());
         $header = $response->getHeader('Authorization');
         $this->assertSame('Basic user:password', $header);
+        $this->assertSame($cookie_a, $response->getCookie('cookie-1'));
+        $this->assertSame($cookie_b, $response->getCookie('cookie-2'));
+    }
+
+    /**
+     * @covers ::__construct
+     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
+     * @uses Laucov\Http\Cookie\ResponseCookie::__construct
+     * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
+     */
+    public function testCookiesMustBeResponseCookieObjects(): void
+    {
+        new IncomingResponse('', [], null, 200, '', [
+            new ResponseCookie('cookie-a', 'A'),
+            new ResponseCookie('cookie-b', 'B'),
+        ]);
+        $this->expectException(\InvalidArgumentException::class);
+        new IncomingResponse('', [], null, 200, '', [
+            new ResponseCookie('cookie-a', 'A'),
+            new \stdClass(),
+        ]);
     }
 }

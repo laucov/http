@@ -26,27 +26,31 @@
  * @copyright © 2024 Laucov Serviços de Tecnologia da Informação Ltda.
  */
 
-namespace Laucov\Http\Message;
-
-use Laucov\Http\Cookie\ResponseCookie;
+namespace Laucov\Http\Cookie;
 
 /**
- * Stores information about an HTTP request.
+ * Stores data for a request cookie.
  */
-interface ResponseInterface extends MessageInterface
+abstract class AbstractCookie implements \Stringable
 {
     /**
-     * Get a registered cookie.
+     * Get the cookie string representation.
      */
-    public function getCookie(string $name): null|ResponseCookie;
+    public abstract function __toString(): string;
 
     /**
-     * Get the response status code.
+     * Create the cookie instance.
      */
-    public function getStatusCode(): int;
+    public function __construct(
+        /**
+         * Name.
+         */
+        public string $name,
 
-    /**
-     * Get the response status text.
-     */
-    public function getStatusText(): string;
+        /**
+         * Value.
+         */
+        public string $value,
+    ) {
+    }
 }
