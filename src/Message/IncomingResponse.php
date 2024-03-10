@@ -28,6 +28,7 @@
 
 namespace Laucov\Http\Message;
 
+use Laucov\Http\Cookie\ResponseCookie;
 use Laucov\Http\Message\Traits\ResponseTrait;
 
 /**
@@ -47,9 +48,20 @@ class IncomingResponse extends AbstractIncomingMessage implements
         null|string $protocol_version,
         int $status_code,
         string $status_text,
+        array $cookies,
     ) {
         $this->statusCode = $status_code;
         $this->statusText = $status_text;
         parent::__construct($content, $headers, $protocol_version);
+        foreach ($cookies as $cookie) {
+            if (!($cookie instanceof ResponseCookie)) {
+                $msg = sprintf(
+                    'All cookies must be %s objects.',
+                    ResponseCookie::class,
+                );
+                throw new \InvalidArgumentException($msg);
+            }
+            $this->cookies[$cookie->name] = $cookie;
+        }
     }
 }
