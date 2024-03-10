@@ -80,11 +80,9 @@ class OutgoingRequestTest extends TestCase
      */
     public function testCanSetCookies(): void
     {
-        $this->request->setCookie(new RequestCookie('foo', 'bar'));
-        $cookie = $this->request->getCookie('foo');
-        $this->assertInstanceOf(RequestCookie::class, $cookie);
-        $this->assertSame('foo', $cookie->name);
-        $this->assertSame('bar', $cookie->value);
+        $cookie = new RequestCookie('foo', 'bar');
+        $this->request->setCookie($cookie);
+        $this->assertSame($cookie, $this->request->getCookie('foo'));
         $this->assertNull($this->request->getCookie('baz'));
     }
 
