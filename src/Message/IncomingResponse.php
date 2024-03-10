@@ -44,11 +44,11 @@ class IncomingResponse extends AbstractIncomingMessage implements
      */
     public function __construct(
         mixed $content,
-        array $headers,
-        null|string $protocol_version,
-        int $status_code,
-        string $status_text,
-        array $cookies,
+        array $headers = [],
+        null|string $protocol_version = null,
+        int $status_code = 200,
+        string $status_text = 'OK',
+        array $cookies = [],
     ) {
         $this->statusCode = $status_code;
         $this->statusText = $status_text;

@@ -40,8 +40,8 @@ class AbstractIncomingMessage extends AbstractMessage
      */
     public function __construct(
         mixed $content,
-        array $headers,
-        null|string $protocol_version,
+        array $headers = [],
+        null|string $protocol_version = null,
     ) {
         // Set body.
         $this->body = new StringSource($content);

@@ -56,12 +56,12 @@ class IncomingRequest extends AbstractIncomingMessage implements
      */
     public function __construct(
         mixed $content_or_post,
-        array $headers,
-        null|string $protocol_version,
-        string $method,
-        string|Uri $uri,
-        array $parameters,
-        array $cookies,
+        array $headers = [],
+        null|string $protocol_version = null,
+        string $method = 'GET',
+        string|Uri $uri = '/',
+        array $parameters = [],
+        array $cookies = [],
     ) {
         // Set parameters.
         $this->parameters = new ArrayReader($parameters);
