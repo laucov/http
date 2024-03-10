@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace Tests\Message;
 
+use Laucov\Http\Cookie\RequestCookie;
 use Laucov\Http\Message\IncomingRequest;
 use PHPUnit\Framework\TestCase;
 
@@ -46,6 +47,7 @@ class IncomingRequestTest extends TestCase
      * @uses Laucov\Arrays\ArrayReader::validateKeys
      * @uses Laucov\Files\Resource\StringSource::__construct
      * @uses Laucov\Files\Resource\StringSource::read
+     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\IncomingRequest::__construct
@@ -71,6 +73,7 @@ class IncomingRequestTest extends TestCase
      * @uses Laucov\Arrays\ArrayReader::__construct
      * @uses Laucov\Files\Resource\StringSource::__construct
      * @uses Laucov\Files\Resource\StringSource::read
+     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\IncomingRequest::__construct
@@ -95,10 +98,12 @@ class IncomingRequestTest extends TestCase
      * @uses Laucov\Arrays\ArrayReader::__construct
      * @uses Laucov\Arrays\ArrayReader::getValue
      * @uses Laucov\Files\Resource\StringSource::__construct
+     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getHeader
      * @uses Laucov\Http\Message\AbstractMessage::getProtocolVersion
      * @uses Laucov\Http\Message\IncomingRequest::__construct
+     * @uses Laucov\Http\Message\Traits\RequestTrait::getCookie
      * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
      * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
      * @uses Laucov\Files\Resource\Uri::__construct
@@ -123,6 +128,28 @@ class IncomingRequestTest extends TestCase
 
         $header = $request->getHeader('Authorization');
         $this->assertSame('Basic john.doe:1234', $header);
+
+        $cookie = $request->getCookie('foobar');
+        $this->assertInstanceOf(RequestCookie::class, $cookie);
+        $this->assertSame('foobar', $cookie->name);
+        $this->assertSame('baz', $cookie->value);
+    }
+
+
+    /**
+     * @covers ::__construct
+     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
+     * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
+     */
+    public function testCookieValuesMustBeStrings(): void
+    {
+        new IncomingRequest([], [], null, 'GET', '', [], [
+            'cookie-a' => 'value-a',
+        ]);
+        $this->expectException(\InvalidArgumentException::class);
+        new IncomingRequest([], [], null, 'GET', '', [], [
+            'cookie-a' => new \stdClass(),
+        ]);
     }
 
     /**
@@ -141,6 +168,11 @@ class IncomingRequestTest extends TestCase
             'search' => 'foobar',
         ];
 
+        // Create cookies.
+        $cookies = [
+            'foobar' => 'baz',
+        ];
+
         // Create request.
         return new IncomingRequest(
             content_or_post: $content,
@@ -149,6 +181,7 @@ class IncomingRequestTest extends TestCase
             method: 'POST',
             uri: 'http://foobar.com/hello-world',
             parameters: $parameters,
+            cookies: $cookies,
         );
     }
 }

@@ -29,6 +29,7 @@
 namespace Laucov\Http\Message;
 
 use Laucov\Arrays\ArrayReader;
+use Laucov\Http\Cookie\RequestCookie;
 use Laucov\Http\Message\Traits\RequestTrait;
 use Laucov\Files\Resource\Uri;
 
@@ -60,6 +61,7 @@ class IncomingRequest extends AbstractIncomingMessage implements
         string $method,
         string|Uri $uri,
         array $parameters,
+        array $cookies,
     ) {
         // Set parameters.
         $this->parameters = new ArrayReader($parameters);
@@ -73,6 +75,17 @@ class IncomingRequest extends AbstractIncomingMessage implements
         } else {
             $this->postVariables = new ArrayReader([]);
             parent::__construct($content_or_post, $headers, $protocol_version);
+        }
+
+        // Set cookies.
+        foreach ($cookies as $name => $value) {
+            if (!is_string($value)) {
+                $msg = 'All cookie values must be strings. Found a value '
+                    . "of type %s in cookie named \"{$name}\".";
+                $type = gettype($value);
+                throw new \InvalidArgumentException(sprintf($msg, $type));
+            }
+            $this->cookies[$name] = new RequestCookie($name, $value);
         }
     }
 
