@@ -28,11 +28,18 @@
 
 namespace Laucov\Http\Message;
 
+use Laucov\Http\Cookie\ResponseCookie;
+
 /**
  * Stores information about an HTTP request.
  */
 interface ResponseInterface extends MessageInterface
 {
+    /**
+     * Get a registered cookie.
+     */
+    public function getCookie(string $name): null|ResponseCookie;
+
     /**
      * Get the response status code.
      */

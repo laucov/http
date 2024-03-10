@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace Tests\Message;
 
+use Laucov\Http\Cookie\ResponseCookie;
 use Laucov\Http\Message\OutgoingResponse;
 use PHPUnit\Framework\TestCase;
 
@@ -58,5 +59,19 @@ class OutgoingResponseTest extends TestCase
         );
         $this->assertSame(201, $this->response->getStatusCode());
         $this->assertSame('Created', $this->response->getStatusText());
+    }
+
+    /**
+     * @covers ::getCookie
+     * @covers ::setCookie
+     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
+     * @uses Laucov\Http\Cookie\ResponseCookie::__construct
+     */
+    public function testCanSetCookies(): void
+    {
+        $cookie = new ResponseCookie('cookie-a', 'foobar');
+        $this->response->setCookie($cookie);
+        $this->assertSame($cookie, $this->response->getCookie('cookie-a'));
+        $this->assertNull($this->response->getCookie('cookie-b'));
     }
 }
