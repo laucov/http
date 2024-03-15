@@ -56,6 +56,13 @@ class Route
          * Execution parameters.
          */
         protected array $parameters,
+
+        /**
+         * Prelude objects.
+         * 
+         * @var array<AbstractRoutePrelude>
+         */
+        protected array $preludes = [],
     ) {
         $this->routeClosure = &$this->routeCallable;
     }
@@ -65,18 +72,40 @@ class Route
      */
     public function run(): ResponseInterface
     {
+        // Run prelude instances.
+        foreach ($this->preludes as $prelude) {
+            $p_result = $prelude->run();
+            if ($p_result !== null) {
+                return $this->createResponse($p_result);
+            }
+        }
+
         // Get closure results.
         $result = call_user_func_array(
             $this->routeClosure->closure,
             $this->parameters,
         );
 
-        // Return result as a response.
-        if ($result instanceof ResponseInterface) {
-            return $result;
-        } elseif (is_string($result) || $result instanceof \Stringable) {
+        // Get response.
+        $response = $this->createResponse($result);
+
+        return $response;
+    }
+
+    /**
+     * Transform unknown output into a `ResponseInterface` object.
+     */
+    protected function createResponse(
+        string|\Stringable|ResponseInterface $content,
+    ): ResponseInterface {
+        // Check content type.
+        if ($content instanceof ResponseInterface) {
+            // Return response.
+            return $content;
+        } elseif (is_string($content) || $content instanceof \Stringable) {
+            // Create response from string.
             $response = new OutgoingResponse();
-            return $response->setBody((string) $result);
+            return $response->setBody((string) $content);
         } else {
             // @codeCoverageIgnoreStart
             $message = 'Received an unexpected result from a route closure.';

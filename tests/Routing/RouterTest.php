@@ -32,6 +32,8 @@ namespace Tests\Routing;
 
 use Laucov\Http\Message\IncomingRequest;
 use Laucov\Http\Message\RequestInterface;
+use Laucov\Http\Message\ResponseInterface;
+use Laucov\Http\Routing\AbstractRoutePrelude;
 use Laucov\Http\Routing\Route;
 use Laucov\Http\Routing\Router;
 use Laucov\Http\Server\ServerInfo;
@@ -67,11 +69,14 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Message\IncomingRequest::__construct
      * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
      * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::getPreludeNames
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::setPreludeNames
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
      * @uses Laucov\Http\Routing\Route::__construct
      * @uses Laucov\Http\Routing\Route::run
+     * @uses Laucov\Http\Routing\Route::createResponse
      * @uses Laucov\Http\Routing\RouteClassMethod::__construct
      * @uses Laucov\Http\Routing\RouteClosure::__construct
      * @uses Laucov\Http\Routing\Router::__construct
@@ -231,6 +236,70 @@ class RouterTest extends TestCase
     }
 
     /**
+     * @covers ::addPrelude
+     * @covers ::findRoute
+     * @covers ::setPreludes
+     * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
+     * @uses Laucov\Http\Message\AbstractMessage::getBody
+     * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
+     * @uses Laucov\Http\Message\IncomingRequest::__construct
+     * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
+     * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::getPreludeNames
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::setPreludeNames
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
+     * @uses Laucov\Http\Routing\AbstractRoutePrelude::__construct
+     * @uses Laucov\Http\Routing\Route::__construct
+     * @uses Laucov\Http\Routing\Route::createResponse
+     * @uses Laucov\Http\Routing\Route::run
+     * @uses Laucov\Http\Routing\RouteClosure::__construct
+     * @uses Laucov\Http\Routing\Router::__construct
+     * @uses Laucov\Http\Routing\Router::getRouteKeys
+     * @uses Laucov\Http\Routing\Router::setClosureRoute
+     * @uses Laucov\Http\Server\ServerInfo::__construct
+     */
+    public function testCanSetAndUsePreludes(): void
+    {
+        // Add prelude and appendix options.
+        $this->router
+            ->addPrelude('p1', PreludeA::class, [])
+            ->addPrelude('p2', PreludeA::class, ['Hello, Universe!'])
+            ->addPrelude('p3', PreludeB::class, []);
+        
+        // Create closures.
+        $closure = fn (): string => 'Hello, World!';
+        
+        // Set routes.
+        $this->router
+            ->setPreludes('p1', 'p3')
+                ->setClosureRoute('GET', 'route-a', $closure)
+            ->setPreludes()
+                ->setClosureRoute('GET', 'route-b', $closure)
+            ->setPreludes('p2')
+                ->setClosureRoute('GET', 'route-c', $closure)
+            ->setPreludes('p3')
+                ->setClosureRoute('GET', 'route-d', $closure);
+        
+        // Test routes.
+        $tests = [
+            ['route-a', 'Hello, World!'],
+            ['route-b', 'Hello, World!'],
+            ['route-c', 'Hello, Universe!'],
+            ['route-d', 'Hello, World!'],
+        ];
+        foreach ($tests as [$path, $expected]) {
+            $route = $this->findRoute('GET', $path);
+            $this->assertInstanceOf(Route::class, $route);
+            $content = (string) $route->run()->getBody();
+            $this->assertSame($expected, $content);
+        }
+
+        // @todo Assert static::$number
+    }
+
+    /**
      * Find a route using a generic request with the given method and path.
      */
     protected function findRoute(
@@ -275,5 +344,32 @@ class Example
     public function sayBye(): string
     {
         return "Goodbye, {$this->name}!";
+    }
+}
+
+class PreludeA extends AbstractRoutePrelude
+{
+    public static int $run_count = 0;
+
+    public function run(): null|string
+    {
+        static::$run_count++;
+
+        if ($this->parameters[0] ?? null) {
+            return $this->parameters[0];
+        }
+
+        return null;
+    }
+}
+
+class PreludeB extends AbstractRoutePrelude
+{
+    public static int $run_count = 0;
+
+    public function run(): null|ResponseInterface
+    {
+        static::$run_count++;
+        return null;
     }
 }

@@ -64,6 +64,36 @@ class RouteClosureTest extends TestCase
     }
 
     /**
+     * @covers ::getPreludeNames
+     * @covers ::setPreludeNames
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
+     * @uses Laucov\Http\Routing\RouteClosure::__construct
+     */
+    public function testCanSetPreludes(): void
+    {
+        // Set route closure.
+        $closure = fn (): string => 'Hello, World';
+        $object = new RouteClosure($closure);
+
+        // Check that names are empty.
+        $preludes = $object->getPreludeNames();
+        $this->assertIsArray($preludes);
+        $this->assertCount(0, $preludes);
+
+        // Add prelude names.
+        $object->setPreludeNames('a', 'b');
+        
+        // Check new values.
+        $preludes = $object->getPreludeNames();
+        $this->assertIsArray($preludes);
+        $this->assertCount(2, $preludes);
+        $this->assertSame('a', $preludes[0]);
+        $this->assertSame('b', $preludes[1]);
+    }
+
+    /**
      * @covers ::__construct
      * @covers ::validate
      * @covers ::validateParameterTypes

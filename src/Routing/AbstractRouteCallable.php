@@ -73,6 +73,32 @@ abstract class AbstractRouteCallable
     public string $returnType;
 
     /**
+     * Route prelude names.
+     * 
+     * @var array<string>
+     */
+    protected array $preludeNames = [];
+
+    /**
+     * Get the callable prelude names.
+     * 
+     * @return array<string>
+     */
+    public function getPreludeNames(): array
+    {
+        return $this->preludeNames;
+    }
+
+    /**
+     * Set the callable prelude names.
+     */
+    public function setPreludeNames(string ...$names): static
+    {
+        $this->preludeNames = $names;
+        return $this;
+    }
+
+    /**
      * Validate and register the callable's parameter and return types.
      */
     protected function validate(\ReflectionFunctionAbstract $reflection): void

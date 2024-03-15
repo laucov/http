@@ -38,6 +38,13 @@ use Laucov\Http\Server\ServerInfo;
 class Router
 {
     /**
+     * Active preludes.
+     * 
+     * @var array<string>
+     */
+    protected array $activePreludes = [];
+
+    /**
      * Stored patterns.
      * 
      * @var array<string, string>
@@ -52,6 +59,13 @@ class Router
     protected array $prefixes = [];
 
     /**
+     * Registered preludes.
+     * 
+     * @var array<string, array{class-string<AbstractRoutePrelude>, array}>
+     */
+    protected array $preludes = [];
+
+    /**
      * Stored routes.
      */
     protected ArrayBuilder $routes;
@@ -62,6 +76,18 @@ class Router
     public function __construct()
     {
         $this->routes = new ArrayBuilder([]);
+    }
+
+    /**
+     * Add a new prelude option.
+     */
+    public function addPrelude(
+        string $name,
+        string $class_name,
+        array $parameters,
+    ): static {
+        $this->preludes[$name] = [$class_name, $parameters];
+        return $this;
     }
 
     /**
@@ -147,7 +173,14 @@ class Router
             }
         }
 
-        return new Route($result, $parameters);
+        // Create preludes.
+        $preludes = [];
+        foreach ($result->getPreludeNames() as $prelude) {
+            [$class_name, $params] = $this->preludes[$prelude];
+            $preludes[] = new $class_name($request, $params);
+        }
+
+        return new Route($result, $parameters, $preludes);
     }
 
     /**
@@ -180,6 +213,15 @@ class Router
     }
 
     /**
+     * Set the current prelude options in use.
+     */
+    public function setPreludes(string ...$names): static
+    {
+        $this->activePreludes = $names;
+        return $this;
+    }
+
+    /**
      * Store a route for the given class method.
      */
     public function setClassRoute(
@@ -189,15 +231,18 @@ class Router
         string $class_method,
         mixed ...$constructor_args,
     ): static {
-        // Get storage keys.
+        // Get array builder keys.
         $keys = $this->getRouteKeys($method, $path);
 
-        // Store callable object.
+        // Create callable method.
         $route_callable = new RouteClassMethod(
             $class_name,
             $class_method,
             ...$constructor_args,
         );
+        $route_callable->setPreludeNames(...$this->activePreludes);
+
+        // Store route.
         $this->routes->setValue($keys, $route_callable);
 
         return $this;
@@ -211,9 +256,14 @@ class Router
         string $path,
         \Closure $callback,
     ): static {
-        // Store a new route closure.
+        // Get array builder keys.
         $keys = $this->getRouteKeys($method, $path);
+
+        // Create route callable object.
         $route_callable = new RouteClosure($callback);
+        $route_callable->setPreludeNames(...$this->activePreludes);
+
+        // Store route.
         $this->routes->setValue($keys, $route_callable);
 
         return $this;
