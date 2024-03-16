@@ -46,7 +46,7 @@ abstract class AbstractRoutePrelude
         protected RequestInterface $request,
 
         /**
-         * Appendix parameters.
+         * Prelude parameters.
          */
         protected array $parameters,
     ) {
@@ -55,7 +55,7 @@ abstract class AbstractRoutePrelude
     /**
      * Run the prelude procedures.
      * 
-     * If returns other value than `null`, the request is interrupted.
+     * Returning other value than `null` should interrupt the request.
      */
     public abstract function run(): null|string|\Stringable|ResponseInterface;
 }
