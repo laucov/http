@@ -147,10 +147,10 @@ class RouterTest extends TestCase
             string $a,
             RequestInterface $b,
             string $c,
-            ServerInfo $d,
+            null|ServerInfo $d,
         ): string {
             $host = $b->getUri()->host;
-            $prot = $d->get('SERVER_PROTOCOL') ?? '???';
+            $prot = $d ? $d->get('SERVER_PROTOCOL', '') : '???';
             return "{$a}, {$host}, {$c}, {$prot}";
         };
         $this->router->setClosureRoute('POST', 'routes/:int/test/:alpha', $closure_g);
@@ -175,8 +175,7 @@ class RouterTest extends TestCase
         $this->router->setClosureRoute('POST', $path_h, $closure_h);
         $route_h = $this->findRoute('POST', 'foos/1/bars/9/bazes/0');
         $this->assertInstanceOf(Route::class, $route_h);
-        $content_h = (string) $route_h->run()->getBody();
-        $this->assertSame('1, 9, 0', $content_h);
+        $this->assertSame('1, 9, 0', (string) $route_h->run()->getBody());
 
         // Test pushing prefix.
         $this->assertSame($this->router, $this->router->pushPrefix('prefix'));

@@ -31,6 +31,8 @@ namespace Laucov\Http\Routing;
 use Laucov\Arrays\ArrayBuilder;
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Server\ServerInfo;
+use Laucov\Injection\Repository;
+use Laucov\Injection\Resolver;
 
 /**
  * Stores routes and assign them to HTTP requests.
@@ -43,6 +45,11 @@ class Router
      * @var array<string>
      */
     protected array $activePreludes = [];
+
+    /**
+     * Dependency repository.
+     */
+    protected Repository $dependencies;
 
     /**
      * Stored patterns.
@@ -66,6 +73,11 @@ class Router
     protected array $preludes = [];
 
     /**
+     * Dependency resolver.
+     */
+    protected Resolver $resolver;
+
+    /**
      * Stored routes.
      */
     protected ArrayBuilder $routes;
@@ -75,6 +87,8 @@ class Router
      */
     public function __construct()
     {
+        $this->dependencies = new Repository();
+        $this->resolver = new Resolver($this->dependencies);
         $this->routes = new ArrayBuilder([]);
     }
 
@@ -141,37 +155,15 @@ class Router
             // @codeCoverageIgnoreEnd
         }
 
-        // Fill function parameters.
-        $parameters = [];
-        $capture_index = 0;
-        foreach ($result->parameterTypes as $type) {
-            if ($type->name === 'string') {
-                if ($type->isVariadic) {
-                    // Add variadic string argument.
-                    $slice = array_slice($captured_segments, $capture_index);
-                    array_push($parameters, ...$slice);
-                    $capture_index = count($captured_segments) - 1;
-                } else {
-                    // Add single string argument.
-                    $parameters[] = $captured_segments[$capture_index];
-                    $capture_index++;
-                }
-            } elseif (is_a($type->name, RequestInterface::class, true)) {
-                // Add request dependency.
-                $parameters[] = $request;
-            } elseif (is_a($type->name, ServerInfo::class, true)) {
-                // Add server info dependency.
-                if ($server === null) {
-                    $server = new ServerInfo([]);
-                }
-                $parameters[] = $server;
-            } else {
-                // @codeCoverageIgnoreStart
-                $message = 'Unexpected route closure parameter of type [%s].';
-                throw new \RuntimeException(sprintf($message, $type->name));
-                // @codeCoverageIgnoreEnd
-            }
+        // Set dependencies.
+        $this->dependencies->setValue(RequestInterface::class, $request);
+        if ($server !== null) {
+            $this->dependencies->setValue(ServerInfo::class, $server);
         }
+        $this->dependencies->setIterable('string', $captured_segments);
+
+        // Get parameters.
+        $parameters = $this->resolver->resolve($result->closure);
 
         // Create preludes.
         $preludes = [];
@@ -179,6 +171,11 @@ class Router
             [$class_name, $params] = $this->preludes[$prelude];
             $preludes[] = new $class_name($request, $params);
         }
+
+        // Remove dependencies.
+        $this->dependencies->removeDependency(RequestInterface::class);
+        $this->dependencies->removeDependency(ServerInfo::class);
+        $this->dependencies->removeDependency('string');
 
         return new Route($result, $parameters, $preludes);
     }
