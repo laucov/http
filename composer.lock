@@ -90,16 +90,16 @@
         },
         {
             "name": "laucov/injection",
-            "version": "v1.1.1",
+            "version": "v1.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laucov/injection.git",
-                "reference": "b0739fdbd3547a9380ee7396c4b5cf88c2274a2c"
+                "reference": "a178960fe680773e7f3a80df19b3768a88c501bf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laucov/injection/zipball/b0739fdbd3547a9380ee7396c4b5cf88c2274a2c",
-                "reference": "b0739fdbd3547a9380ee7396c4b5cf88c2274a2c",
+                "url": "https://api.github.com/repos/laucov/injection/zipball/a178960fe680773e7f3a80df19b3768a88c501bf",
+                "reference": "a178960fe680773e7f3a80df19b3768a88c501bf",
                 "shasum": ""
             },
             "require-dev": {
@@ -125,9 +125,9 @@
             "description": "Library for easy dependency injection on callables.",
             "support": {
                 "issues": "https://github.com/laucov/injection/issues",
-                "source": "https://github.com/laucov/injection/tree/v1.1.1"
+                "source": "https://github.com/laucov/injection/tree/v1.2.2"
             },
-            "time": "2024-03-17T13:14:38+00:00"
+            "time": "2024-03-17T15:00:13+00:00"
         }
     ],
     "packages-dev": [

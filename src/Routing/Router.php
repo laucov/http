@@ -33,6 +33,7 @@ use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Server\ServerInfo;
 use Laucov\Injection\Repository;
 use Laucov\Injection\Resolver;
+use Laucov\Injection\Validator;
 
 /**
  * Stores routes and assign them to HTTP requests.
@@ -83,12 +84,24 @@ class Router
     protected ArrayBuilder $routes;
 
     /**
+     * Dependency validator.
+     */
+    protected Validator $validator;
+
+    /**
      * Create the router instance.
      */
     public function __construct()
     {
+        // Setup dependency injection.
         $this->dependencies = new Repository();
         $this->resolver = new Resolver($this->dependencies);
+        $this->validator = new Validator($this->dependencies);
+        $this->validator->allow(RequestInterface::class);
+        $this->validator->allow(ServerInfo::class);
+        $this->validator->allow('string');
+
+        // Create route array.
         $this->routes = new ArrayBuilder([]);
     }
 
@@ -155,7 +168,7 @@ class Router
             // @codeCoverageIgnoreEnd
         }
 
-        // Set dependencies.
+        // Set temporary dependencies.
         $this->dependencies->setValue(RequestInterface::class, $request);
         if ($server !== null) {
             $this->dependencies->setValue(ServerInfo::class, $server);
@@ -172,7 +185,7 @@ class Router
             $preludes[] = new $class_name($request, $params);
         }
 
-        // Remove dependencies.
+        // Remove temporary dependencies.
         $this->dependencies->removeDependency(RequestInterface::class);
         $this->dependencies->removeDependency(ServerInfo::class);
         $this->dependencies->removeDependency('string');
@@ -231,6 +244,13 @@ class Router
         // Get array builder keys.
         $keys = $this->getRouteKeys($method, $path);
 
+        // Validate.
+        if (!$this->validator->validate([$class_name, $class_method])) {
+            $message = 'Cannot route to %s::%s due to invalid parameters.';
+            $message = sprintf($message, $class_name, $class_method);
+            throw new \InvalidArgumentException($message);
+        }
+
         // Create callable method.
         $route_callable = new RouteClassMethod(
             $class_name,
@@ -251,13 +271,19 @@ class Router
     public function setClosureRoute(
         string $method,
         string $path,
-        \Closure $callback,
+        \Closure $closure,
     ): static {
         // Get array builder keys.
         $keys = $this->getRouteKeys($method, $path);
 
+        // Validate.
+        if (!$this->validator->validate($closure)) {
+            $message = 'Cannot route callback due to invalid parameters.';
+            throw new \InvalidArgumentException($message);
+        }
+
         // Create route callable object.
-        $route_callable = new RouteClosure($callback);
+        $route_callable = new RouteClosure($closure);
         $route_callable->setPreludeNames(...$this->activePreludes);
 
         // Store route.
