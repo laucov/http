@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "52f9c0e0bf717406f3b3bf3e949761f2",
+    "content-hash": "6c65a41be6f074c6d9af253df85d8456",
     "packages": [
         {
             "name": "laucov/arrays",
@@ -87,6 +87,47 @@
                 "source": "https://github.com/laucov/files/tree/v1.0.0"
             },
             "time": "2024-01-31T12:48:29+00:00"
+        },
+        {
+            "name": "laucov/injection",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laucov/injection.git",
+                "reference": "f80e8fbb7a3ff69368fc1078a0e227a52e896781"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laucov/injection/zipball/f80e8fbb7a3ff69368fc1078a0e227a52e896781",
+                "reference": "f80e8fbb7a3ff69368fc1078a0e227a52e896781",
+                "shasum": ""
+            },
+            "require-dev": {
+                "laravel/pint": "^1.13",
+                "phpunit/phpunit": "^9.6"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Laucov\\Injection\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Rafael Covaleski Pereira",
+                    "email": "rafael.covaleski@laucov.com"
+                }
+            ],
+            "description": "Library for easy dependency injection on callables.",
+            "support": {
+                "issues": "https://github.com/laucov/injection/issues",
+                "source": "https://github.com/laucov/injection/tree/v1.0.0"
+            },
+            "time": "2024-03-17T11:47:11+00:00"
         }
     ],
     "packages-dev": [

@@ -21,6 +21,7 @@
     },
     "require": {
         "laucov/arrays": "^1.0",
-        "laucov/files": "^1.0"
+        "laucov/files": "^1.0",
+        "laucov/injection": "^1.0"
     }
 }
