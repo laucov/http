@@ -37,6 +37,10 @@ use Laucov\Injection\Validator;
 
 /**
  * Stores routes and assign them to HTTP requests.
+ * 
+ * @todo Validate parameters and return values in Router.
+ * @todo Make route closures key-value objects.
+ * @todo Make routes instantiate classes when needed.
  */
 class Router
 {
