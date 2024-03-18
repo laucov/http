@@ -30,6 +30,7 @@ namespace Laucov\Http\Routing\Call;
 
 use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\ResponseInterface;
+use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
 
 /**
  * Stores information about a processed route callback.
@@ -53,7 +54,7 @@ class Route
         /**
          * Route preludes.
          * 
-         * @var array<Prelude>
+         * @var array<PreludeInterface>
          */
         protected array $preludes,
     ) {
@@ -64,6 +65,16 @@ class Route
      */
     public function run(): ResponseInterface
     {
+        // Run preludes.
+        foreach ($this->preludes as $prelude) {
+            $prelude_result = $prelude->run();
+            if ($prelude_result !== null) {
+                return $prelude_result instanceof ResponseInterface
+                    ? $prelude_result
+                    : $this->createResponse($prelude_result);
+            }
+        }
+
         // Run callback.
         $callback = $this->callback->callback;
         if (is_callable($callback)) {

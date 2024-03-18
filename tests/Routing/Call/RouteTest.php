@@ -33,6 +33,7 @@ namespace Tests\Routing\Call;
 use Laucov\Http\Message\IncomingResponse;
 use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Routing\Call\Callback;
+use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
 use Laucov\Http\Routing\Call\Route;
 use PHPUnit\Framework\TestCase;
 
@@ -59,14 +60,40 @@ class RouteTest extends TestCase
             new Callback([B::class, 'y'], [3, 5], []),
         ];
 
+        // Create preludes.
+        $preludes = [
+            new class () implements PreludeInterface
+            {
+                public function run(): null
+                {
+                    return null;
+                }
+            },
+            new class () implements PreludeInterface
+            {
+                public function run(): string
+                {
+                    return 'Interrupted!';
+                }
+            },
+            new class () implements PreludeInterface
+            {
+                public function run(): ResponseInterface
+                {
+                    return new IncomingResponse('Interrupted again!');
+                }
+            },
+        ];
+
         return [
             [[$callbacks[0], ['John'], []], 'Hello, John!'],
             [[$callbacks[1], [5, 8], []], 'x + y = 13'],
             [[$callbacks[2], [5], []], '11'],
             [[$callbacks[2], [3], []], '7'],
             [[$callbacks[3], [5], []], '20'],
-            [[$callbacks[3], [3], []], '14'],
-            // @todo Test with preludes.
+            [[$callbacks[0], ['Mary'], [$preludes[0]]], 'Hello, Mary!'],
+            [[$callbacks[0], ['Mary'], [$preludes[1]]], 'Interrupted!'],
+            [[$callbacks[0], ['Mary'], [$preludes[2]]], 'Interrupted again!'],
         ];
     }
 
