@@ -41,6 +41,9 @@ use Laucov\Injection\Validator;
  * 
  * @todo Make route closures key-value objects.
  * @todo Make the router instantiate the class routes.
+ * @todo ::setClassName
+ * @todo ::setMethodRoute
+ * @todo ::setCallableRoute
  */
 class Router
 {
@@ -331,6 +334,9 @@ class Router
         return [$method, ...$prefix_segments, ...$segments];
     }
 
+    /**
+     * Check whether a callback is eligible to be used as a route.
+     */
     protected function validateCallback(array|callable $callback): void
     {
         // Validate parameter types.
@@ -362,26 +368,29 @@ class Router
      */
     protected function validateReturnType(\ReflectionType $type): void
     {
+        // Validate named type.
         if ($type instanceof \ReflectionNamedType) {
-            // Get name.
+            // Check if type name is allowed.
             $name = $type->getName();
-            // Check if type is allowed.
             if (!in_array($name, static::ALLOWED_RETURN_TYPES, true)) {
                 $message = "Invalid return type {$type}: Allowed types are "
                     . implode(', ', static::ALLOWED_RETURN_TYPES) . ".";
                 throw new \InvalidArgumentException($message);
             }
             return;
-        } elseif ($type instanceof \ReflectionUnionType) {
-            // Validate each type.
+        }
+        
+        // Validate each type from union types.
+        if ($type instanceof \ReflectionUnionType) {
             foreach ($type->getTypes() as $subtype) {
                 $this->validateReturnType($subtype);
             }
-        } else {
-            // Cannot use intersection types.
-            $message = "Invalid return type {$type}: Only named and union"
-                . " return types are supported.";
-            throw new \InvalidArgumentException($message);
+            return;
         }
+
+        // Cannot use intersection types.
+        $message = "Invalid return type {$type}: Only named and union"
+            . " return types are supported.";
+        throw new \InvalidArgumentException($message);
     }
 }
