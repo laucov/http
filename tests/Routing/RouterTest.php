@@ -55,6 +55,8 @@ class RouterTest extends TestCase
      * @covers ::setClassRoute
      * @covers ::setClosureRoute
      * @covers ::setPattern
+     * @covers ::validateCallback
+     * @covers ::validateReturnType
      * @uses Laucov\Arrays\ArrayBuilder::setValue
      * @uses Laucov\Arrays\ArrayReader::__construct
      * @uses Laucov\Arrays\ArrayReader::getValue
@@ -257,6 +259,8 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\Router::__construct
      * @uses Laucov\Http\Routing\Router::getRouteKeys
      * @uses Laucov\Http\Routing\Router::setClosureRoute
+     * @uses Laucov\Http\Routing\Router::validateCallback
+     * @uses Laucov\Http\Routing\Router::validateReturnType
      * @uses Laucov\Http\Server\ServerInfo::__construct
      */
     public function testCanSetAndUsePreludes(): void
