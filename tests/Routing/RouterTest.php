@@ -43,6 +43,7 @@ use PHPUnit\Framework\TestCase;
  * @coversDefaultClass \Laucov\Http\Routing\Router
  * @todo Replace deprecated methods.
  * @todo Test preludes with other constructor dependencies.
+ * @todo Test invalid callbacks.
  */
 class RouterTest extends TestCase
 {
