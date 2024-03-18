@@ -30,6 +30,7 @@ namespace Laucov\Http\Routing;
 
 use Laucov\Arrays\ArrayBuilder;
 use Laucov\Http\Message\RequestInterface;
+use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Server\ServerInfo;
 use Laucov\Injection\Repository;
 use Laucov\Injection\Resolver;
@@ -38,12 +39,20 @@ use Laucov\Injection\Validator;
 /**
  * Stores routes and assign them to HTTP requests.
  * 
- * @todo Validate parameters and return values in Router.
  * @todo Make route closures key-value objects.
- * @todo Make routes instantiate classes when needed.
+ * @todo Make the router instantiate the class routes.
  */
 class Router
 {
+    /**
+     * Allowed callback return types.
+     */
+    public const ALLOWED_RETURN_TYPES = [
+        'string',
+        \Stringable::class,
+        ResponseInterface::class,
+    ];
+
     /**
      * Active preludes.
      * 
@@ -249,11 +258,7 @@ class Router
         $keys = $this->getRouteKeys($method, $path);
 
         // Validate.
-        if (!$this->validator->validate([$class_name, $class_method])) {
-            $message = 'Cannot route to %s::%s due to invalid parameters.';
-            $message = sprintf($message, $class_name, $class_method);
-            throw new \InvalidArgumentException($message);
-        }
+        $this->validateCallback([$class_name, $class_method]);
 
         // Create callable method.
         $route_callable = new RouteClassMethod(
@@ -281,10 +286,7 @@ class Router
         $keys = $this->getRouteKeys($method, $path);
 
         // Validate.
-        if (!$this->validator->validate($closure)) {
-            $message = 'Cannot route callback due to invalid parameters.';
-            throw new \InvalidArgumentException($message);
-        }
+        $this->validateCallback($closure);
 
         // Create route callable object.
         $route_callable = new RouteClosure($closure);
@@ -327,5 +329,59 @@ class Router
         $segments[] = '/';
 
         return [$method, ...$prefix_segments, ...$segments];
+    }
+
+    protected function validateCallback(array|callable $callback): void
+    {
+        // Validate parameter types.
+        if (!$this->validator->validate($callback)) {
+            $message = 'Cannot route callback due to invalid parameter types.';
+            throw new \InvalidArgumentException($message);
+        }
+
+        // Get return type.
+        $reflection = is_array($callback)
+            ? new \ReflectionMethod(...$callback)
+            : new \ReflectionFunction($callback);
+        $return_type = $reflection->getReturnType();
+
+        // Ensure the callback returns something.
+        if ($return_type === null) {
+            $message = 'Route callables must have a return type.';
+            throw new \InvalidArgumentException($message);
+        }
+
+        // Check for a valid type.
+        $this->validateReturnType($return_type);
+    }
+
+    /**
+     * Check if a type is allowed as a callback return type.
+     * 
+     * Will throw an exception if an invalid type is found.
+     */
+    protected function validateReturnType(\ReflectionType $type): void
+    {
+        if ($type instanceof \ReflectionNamedType) {
+            // Get name.
+            $name = $type->getName();
+            // Check if type is allowed.
+            if (!in_array($name, static::ALLOWED_RETURN_TYPES, true)) {
+                $message = "Invalid return type {$type}: Allowed types are "
+                    . implode(', ', static::ALLOWED_RETURN_TYPES) . ".";
+                throw new \InvalidArgumentException($message);
+            }
+            return;
+        } elseif ($type instanceof \ReflectionUnionType) {
+            // Validate each type.
+            foreach ($type->getTypes() as $subtype) {
+                $this->validateReturnType($subtype);
+            }
+        } else {
+            // Cannot use intersection types.
+            $message = "Invalid return type {$type}: Only named and union"
+                . " return types are supported.";
+            throw new \InvalidArgumentException($message);
+        }
     }
 }
