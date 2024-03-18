@@ -34,13 +34,15 @@ use Laucov\Http\Message\IncomingRequest;
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Routing\AbstractRoutePrelude;
-use Laucov\Http\Routing\Route;
+use Laucov\Http\Routing\Call\Route;
 use Laucov\Http\Routing\Router;
 use Laucov\Http\Server\ServerInfo;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @coversDefaultClass \Laucov\Http\Routing\Router
+ * @todo Replace deprecated methods.
+ * @todo Test preludes with other constructor dependencies.
  */
 class RouterTest extends TestCase
 {
@@ -52,6 +54,7 @@ class RouterTest extends TestCase
      * @covers ::getRouteKeys
      * @covers ::popPrefix
      * @covers ::pushPrefix
+     * @covers ::setCallableRoute
      * @covers ::setClassRoute
      * @covers ::setClosureRoute
      * @covers ::setPattern
@@ -76,11 +79,10 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
-     * @uses Laucov\Http\Routing\Route::__construct
-     * @uses Laucov\Http\Routing\Route::run
-     * @uses Laucov\Http\Routing\Route::createResponse
-     * @uses Laucov\Http\Routing\RouteClassMethod::__construct
-     * @uses Laucov\Http\Routing\RouteClosure::__construct
+     * @uses Laucov\Http\Routing\Call\Callback::__construct
+     * @uses Laucov\Http\Routing\Call\Route::__construct
+     * @uses Laucov\Http\Routing\Call\Route::createResponse
+     * @uses Laucov\Http\Routing\Call\Route::run
      * @uses Laucov\Http\Routing\Router::__construct
      * @uses Laucov\Http\Server\ServerInfo::__construct
      * @uses Laucov\Http\Server\ServerInfo::get
@@ -252,12 +254,13 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
      * @uses Laucov\Http\Routing\AbstractRoutePrelude::__construct
-     * @uses Laucov\Http\Routing\Route::__construct
-     * @uses Laucov\Http\Routing\Route::createResponse
-     * @uses Laucov\Http\Routing\Route::run
-     * @uses Laucov\Http\Routing\RouteClosure::__construct
+     * @uses Laucov\Http\Routing\Call\Callback::__construct
+     * @uses Laucov\Http\Routing\Call\Route::__construct
+     * @uses Laucov\Http\Routing\Call\Route::createResponse
+     * @uses Laucov\Http\Routing\Call\Route::run
      * @uses Laucov\Http\Routing\Router::__construct
      * @uses Laucov\Http\Routing\Router::getRouteKeys
+     * @uses Laucov\Http\Routing\Router::setCallableRoute
      * @uses Laucov\Http\Routing\Router::setClosureRoute
      * @uses Laucov\Http\Routing\Router::validateCallback
      * @uses Laucov\Http\Routing\Router::validateReturnType
@@ -298,8 +301,6 @@ class RouterTest extends TestCase
             $content = (string) $route->run()->getBody();
             $this->assertSame($expected, $content);
         }
-
-        // @todo Assert static::$number
     }
 
     /**
