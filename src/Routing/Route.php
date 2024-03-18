@@ -30,11 +30,12 @@ namespace Laucov\Http\Routing;
 
 use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\ResponseInterface;
+use Laucov\Http\Routing\Call\Interfaces\RouteInterface;
 
 /**
  * Stores information about an HTTP route.
  */
-class Route
+class Route implements RouteInterface
 {
     /**
      * Route closure.

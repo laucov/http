@@ -31,11 +31,12 @@ namespace Laucov\Http\Routing\Call;
 use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
+use Laucov\Http\Routing\Call\Interfaces\RouteInterface;
 
 /**
  * Stores information about a processed route callback.
  */
-class Route
+class Route implements RouteInterface
 {
     /**
      * Create the route instance.

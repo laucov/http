@@ -31,6 +31,10 @@ namespace Laucov\Http\Routing;
 use Laucov\Arrays\ArrayBuilder;
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
+use Laucov\Http\Routing\Call\Callback;
+use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
+use Laucov\Http\Routing\Call\Interfaces\RouteInterface;
+use Laucov\Http\Routing\Call\Route;
 use Laucov\Http\Server\ServerInfo;
 use Laucov\Injection\Repository;
 use Laucov\Injection\Resolver;
@@ -38,12 +42,6 @@ use Laucov\Injection\Validator;
 
 /**
  * Stores routes and assign them to HTTP requests.
- * 
- * @todo Make route closures key-value objects.
- * @todo Make the router instantiate the class routes.
- * @todo ::setClassName
- * @todo ::setMethodRoute
- * @todo ::setCallableRoute
  */
 class Router
 {
@@ -85,7 +83,7 @@ class Router
     /**
      * Registered preludes.
      * 
-     * @var array<string, array{class-string<AbstractRoutePrelude>, array}>
+     * @var array<string, array{class-string<PreludeInterface>, array}>
      */
     protected array $preludes = [];
 
@@ -139,7 +137,7 @@ class Router
     public function findRoute(
         RequestInterface $request,
         null|ServerInfo $server = null,
-    ): null|Route {
+    ): null|RouteInterface {
         // Get method and routes.
         $method = $request->getMethod();
         $routes = (array) $this->routes->getValue($method, []);
@@ -177,9 +175,10 @@ class Router
         }
 
         // Check if is a route closure.
-        if (!($result instanceof AbstractRouteCallable)) {
+        $callback = $result;
+        if (!($callback instanceof Callback)) {
             // @codeCoverageIgnoreStart
-            $message = 'Found an unexpected [%s] stored as a route callable.';
+            $message = 'Found an unexpected %s stored as a route callable.';
             throw new \RuntimeException(sprintf($message, gettype($result)));
             // @codeCoverageIgnoreEnd
         }
@@ -189,24 +188,28 @@ class Router
         if ($server !== null) {
             $this->dependencies->setValue(ServerInfo::class, $server);
         }
-        $this->dependencies->setIterable('string', $captured_segments);
-
-        // Get parameters.
-        $parameters = $this->resolver->resolve($result->closure);
 
         // Create preludes.
         $preludes = [];
-        foreach ($result->getPreludeNames() as $prelude) {
-            [$class_name, $params] = $this->preludes[$prelude];
-            $preludes[] = new $class_name($request, $params);
+        foreach ($callback->preludeNames as $prelude) {
+            // Get prelude data.
+            [$class_name, $parameters] = $this->preludes[$prelude];
+            // Add dependency and instantiate.
+            $this->dependencies->setValue('array', $parameters);
+            $preludes[] = $this->resolver->instantiate($class_name);
+            $this->dependencies->removeDependency('array');
         }
+
+        // Get parameters.
+        $this->dependencies->setIterable('string', $captured_segments);
+        $parameters = $this->resolver->resolve($callback->callback);
 
         // Remove temporary dependencies.
         $this->dependencies->removeDependency(RequestInterface::class);
         $this->dependencies->removeDependency(ServerInfo::class);
         $this->dependencies->removeDependency('string');
 
-        return new Route($result, $parameters, $preludes);
+        return new Route($callback, $parameters, $preludes);
     }
 
     /**
@@ -248,6 +251,25 @@ class Router
     }
 
     /**
+     * Set a callable (function, instance method, etc.) as a route.
+     */
+    public function setCallableRoute(
+        string $method,
+        string $path,
+        callable $callable,
+    ): static {
+        // Get array builder keys.
+        $keys = $this->getRouteKeys($method, $path);
+
+        // Store callback.
+        $this->validateCallback($callable);
+        $callback = new Callback($callable, null, $this->activePreludes);
+        $this->routes->setValue($keys, $callback);
+
+        return $this;
+    }
+
+    /**
      * Store a route for the given class method.
      */
     public function setClassRoute(
@@ -260,45 +282,31 @@ class Router
         // Get array builder keys.
         $keys = $this->getRouteKeys($method, $path);
 
-        // Validate.
-        $this->validateCallback([$class_name, $class_method]);
-
-        // Create callable method.
-        $route_callable = new RouteClassMethod(
-            $class_name,
-            $class_method,
-            ...$constructor_args,
+        // Create method reference.
+        $reference = [$class_name, $class_method];
+        $this->validateCallback($reference);
+        $callback = new Callback(
+            $reference,
+            $constructor_args,
+            $this->activePreludes,
         );
-        $route_callable->setPreludeNames(...$this->activePreludes);
-
-        // Store route.
-        $this->routes->setValue($keys, $route_callable);
+        $this->routes->setValue($keys, $callback);
 
         return $this;
     }
 
     /**
      * Store a route for the given closure.
+     * 
+     * @codeCoverageIgnore
+     * @deprecated 2.0.0 Use `setCallableRoute()` instead.
      */
     public function setClosureRoute(
         string $method,
         string $path,
         \Closure $closure,
     ): static {
-        // Get array builder keys.
-        $keys = $this->getRouteKeys($method, $path);
-
-        // Validate.
-        $this->validateCallback($closure);
-
-        // Create route callable object.
-        $route_callable = new RouteClosure($closure);
-        $route_callable->setPreludeNames(...$this->activePreludes);
-
-        // Store route.
-        $this->routes->setValue($keys, $route_callable);
-
-        return $this;
+        return $this->setCallableRoute($method, $path, $closure);
     }
 
     /**
