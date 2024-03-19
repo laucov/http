@@ -313,7 +313,7 @@ class Router
      * Store a route for the given closure.
      * 
      * @codeCoverageIgnore
-     * @deprecated 2.0.0 Use `setClosureRoute()` instead.
+     * @deprecated 2.0.0 Use `setCallableRoute()` instead.
      */
     public function setRoute(
         string $method,
