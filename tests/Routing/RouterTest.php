@@ -57,7 +57,6 @@ class RouterTest extends TestCase
      * @covers ::pushPrefix
      * @covers ::setCallableRoute
      * @covers ::setClassRoute
-     * @covers ::setClosureRoute
      * @covers ::setPattern
      * @covers ::validateCallback
      * @covers ::validateReturnType
@@ -94,7 +93,7 @@ class RouterTest extends TestCase
         $closure_a = fn (): string => 'Output A';
         $this->assertSame(
             $this->router,
-            $this->router->setClosureRoute('GET', 'path/to/route-a', $closure_a),
+            $this->router->setCallableRoute('GET', 'path/to/route-a', $closure_a),
         );
 
         // Get existent route.
@@ -111,17 +110,17 @@ class RouterTest extends TestCase
 
         // Test router's path trimming.
         $closure_b = fn (): string => 'Output B';
-        $this->router->setClosureRoute('POST', 'path/to/route-b/', $closure_b);
+        $this->router->setCallableRoute('POST', 'path/to/route-b/', $closure_b);
         $route_b = $this->findRoute('POST', 'path/to/route-b');
         $this->assertInstanceOf(Route::class, $route_b);
         $this->assertSame('Output B', (string) $route_b->run()->getBody());
         $closure_c = fn (): string => 'Output C';
-        $this->router->setClosureRoute('PUT', '/path/to/route-c', $closure_c);
+        $this->router->setCallableRoute('PUT', '/path/to/route-c', $closure_c);
         $route_c = $this->findRoute('PUT', 'path/to/route-c');
         $this->assertInstanceOf(Route::class, $route_c);
         $this->assertSame('Output C', (string) $route_c->run()->getBody());
         $closure_d = fn (): string => 'Output D';
-        $this->router->setClosureRoute('PATCH', '/path/to/route-d/', $closure_d);
+        $this->router->setCallableRoute('PATCH', '/path/to/route-d/', $closure_d);
         $route_d = $this->findRoute('PATCH', 'path/to/route-d');
         $this->assertInstanceOf(Route::class, $route_d);
         $this->assertSame('Output D', (string) $route_d->run()->getBody());
@@ -135,14 +134,14 @@ class RouterTest extends TestCase
 
         // Test without parameters.
         $closure_e = fn (): string => 'Output E';
-        $this->router->setClosureRoute('POST', 'routes/:alpha', $closure_e);
+        $this->router->setCallableRoute('POST', 'routes/:alpha', $closure_e);
         $route_e = $this->findRoute('POST', 'routes/e');
         $this->assertInstanceOf(Route::class, $route_e);
         $this->assertSame('Output E', (string) $route_e->run()->getBody());
 
         // Test with parameters.
         $closure_f = fn (string $a): string => sprintf('Output %s', $a);
-        $this->router->setClosureRoute('GET', 'routes/:int', $closure_f);
+        $this->router->setCallableRoute('GET', 'routes/:int', $closure_f);
         $route_f = $this->findRoute('GET', 'routes/123');
         $this->assertInstanceOf(Route::class, $route_f);
         $this->assertSame('Output 123', (string) $route_f->run()->getBody());
@@ -158,7 +157,7 @@ class RouterTest extends TestCase
             $prot = $d ? $d->get('SERVER_PROTOCOL', '') : '???';
             return "{$a}, {$host}, {$c}, {$prot}";
         };
-        $this->router->setClosureRoute('POST', 'routes/:int/test/:alpha', $closure_g);
+        $this->router->setCallableRoute('POST', 'routes/:int/test/:alpha', $closure_g);
         $route_g1 = $this->findRoute('POST', 'routes/123/test/abc');
         $this->assertInstanceOf(Route::class, $route_g1);
         $this->assertSame(
@@ -177,14 +176,14 @@ class RouterTest extends TestCase
             return $a . ', ' . implode(', ', $b);
         };
         $path_h = 'foos/:int/bars/:int/bazes/:int';
-        $this->router->setClosureRoute('POST', $path_h, $closure_h);
+        $this->router->setCallableRoute('POST', $path_h, $closure_h);
         $route_h = $this->findRoute('POST', 'foos/1/bars/9/bazes/0');
         $this->assertInstanceOf(Route::class, $route_h);
         $this->assertSame('1, 9, 0', (string) $route_h->run()->getBody());
 
         // Test pushing prefix.
         $this->assertSame($this->router, $this->router->pushPrefix('prefix'));
-        $this->router->setClosureRoute('GET', 'path/a', fn (): string => 'Path A');
+        $this->router->setCallableRoute('GET', 'path/a', fn (): string => 'Path A');
         $route_i = $this->findRoute('GET', 'prefix/path/a');
         $this->assertInstanceOf(Route::class, $route_i);
         $content_i = (string) $route_i->run()->getBody();
@@ -192,7 +191,7 @@ class RouterTest extends TestCase
 
         // Test popping prefix.
         $this->assertSame($this->router, $this->router->popPrefix());
-        $this->router->setClosureRoute('GET', 'path/b', fn (): string => 'Path B');
+        $this->router->setCallableRoute('GET', 'path/b', fn (): string => 'Path B');
         $route_j = $this->findRoute('GET', 'path/b');
         $this->assertInstanceOf(Route::class, $route_j);
         $content_j = (string) $route_j->run()->getBody();
@@ -201,14 +200,14 @@ class RouterTest extends TestCase
         // Test prefix trimming.
         $this->router
             ->pushPrefix('/animals')
-                ->setClosureRoute('GET', 'dog', fn (): string => 'Dog!')
+                ->setCallableRoute('GET', 'dog', fn (): string => 'Dog!')
             ->popPrefix()
             ->pushPrefix('plants/')
-                ->setClosureRoute('GET', 'tree', fn (): string => 'Tree!')
+                ->setCallableRoute('GET', 'tree', fn (): string => 'Tree!')
             ->popPrefix()
             ->pushPrefix('/plants/')
                 ->pushPrefix('flowers')
-                    ->setClosureRoute('GET', 'poppy', fn (): string => 'Poppy!')
+                    ->setCallableRoute('GET', 'poppy', fn (): string => 'Poppy!')
                 ->popPrefix()
             ->popPrefix();
         $tests = [
@@ -262,7 +261,6 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\Router::__construct
      * @uses Laucov\Http\Routing\Router::getRouteKeys
      * @uses Laucov\Http\Routing\Router::setCallableRoute
-     * @uses Laucov\Http\Routing\Router::setClosureRoute
      * @uses Laucov\Http\Routing\Router::validateCallback
      * @uses Laucov\Http\Routing\Router::validateReturnType
      * @uses Laucov\Http\Server\ServerInfo::__construct
@@ -281,13 +279,13 @@ class RouterTest extends TestCase
         // Set routes.
         $this->router
             ->setPreludes('p1', 'p3')
-                ->setClosureRoute('GET', 'route-a', $closure)
+                ->setCallableRoute('GET', 'route-a', $closure)
             ->setPreludes()
-                ->setClosureRoute('GET', 'route-b', $closure)
+                ->setCallableRoute('GET', 'route-b', $closure)
             ->setPreludes('p2')
-                ->setClosureRoute('GET', 'route-c', $closure)
+                ->setCallableRoute('GET', 'route-c', $closure)
             ->setPreludes('p3')
-                ->setClosureRoute('GET', 'route-d', $closure);
+                ->setCallableRoute('GET', 'route-d', $closure);
         
         // Test routes.
         $tests = [
