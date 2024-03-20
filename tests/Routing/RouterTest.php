@@ -41,7 +41,6 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @coversDefaultClass \Laucov\Http\Routing\Router
- * @todo Replace deprecated methods.
  * @todo Test preludes with other constructor dependencies.
  * @todo Test invalid callbacks.
  */
@@ -89,28 +88,61 @@ class RouterTest extends TestCase
      */
     public function testCanSetAndFindRoutes(): void
     {
-        // Set route.
-        $closure_a = fn (): string => 'Output A';
-        $this->assertSame(
-            $this->router,
-            $this->router->setCallableRoute('GET', 'path/to/route-a', $closure_a),
-        );
+        // Set closures.
+        $closures = [
+            fn (): string => 'Hello, World!',
+            fn (): string => 'Hello, Everyone!',
+            fn (): string => 'Hello, Planet!',
+            fn (): string => 'Hello, Universe!',
+        ];
 
-        // Get existent route.
-        $route_a = $this->findRoute('GET', 'path/to/route-a');
-        $this->assertInstanceOf(Route::class, $route_a);
-        $this->assertSame('Output A', (string) $route_a->run()->getBody());
+        // Set routes.
+        $this->router
+            ->setCallableRoute('GET', 'path/to/route-a', $closures[0])
+            ->setCallableRoute('POST', 'path/to/route-b/', $closures[1])
+            ->setCallableRoute('POST', '/path/to/route-c', $closures[2])
+            ->setCallableRoute('POST', '/path/to/route-d/', $closures[3]);
+        
+        // Set tests and expectations.
+        $tests = [
+            // Assert route A exists.
+            ['GET', 'path/to/route-a', 'Hello, World!'],
+            // Assert route A only exists for GET requests.
+            ['POST', 'path/to/route-a', null],
+            // Assert route Z does not exist.
+            ['GET', 'path/to/route-z', null],
+            // Assert that intermediary paths of route A cannot be accessed.
+            ['GET', 'path/to', null],
+            // Assert route B exists - test right trimming.
+            ['POST', 'path/to/route-b', 'Hello, Everyone!'],
+            // Assert route C exists - test left trimming.
+            ['POST', 'path/to/route-c', 'Hello, Planet!'],
+            // Assert route D exists - test full trimming.
+            ['POST', 'path/to/route-d', 'Hello, Universe!'],
+        ];
 
-        // Get inexistent route with inexistent segment.
-        $this->assertNull($this->findRoute('GET', 'path/to/route-b'));
-        // Get inexistent route with intermediary segment.
-        $this->assertNull($this->findRoute('GET', 'path/to'));
-        // Get inexistent route with wrong method.
-        $this->assertNull($this->findRoute('POST', 'path/to/route-a'));
+        // Run tests.
+        foreach ($tests as $i => [$method, $path, $expected]) {
+            $uri = "https://foobar.com/" . $path;
+            $name = "Assert that {$method} {$uri}";
+            $request = new IncomingRequest('', method: $method, uri: $uri);
+            $route = $this->router->findRoute($request);
+            if ($expected === null) {
+                $message = "{$name} is null";
+                $this->assertNull($route, "{$name} is null");
+            } else {
+                $message = "{$name} is a route";
+                $this->assertInstanceOf(Route::class, $route, $message);
+                $response = $route->run();
+                $content = (string) $response->getBody();
+                $message = "{$name} output";
+                $this->assertSame($expected, $content, "{$name}");
+            }
+        }
+
+        return;
 
         // Test router's path trimming.
-        $closure_b = fn (): string => 'Output B';
-        $this->router->setCallableRoute('POST', 'path/to/route-b/', $closure_b);
         $route_b = $this->findRoute('POST', 'path/to/route-b');
         $this->assertInstanceOf(Route::class, $route_b);
         $this->assertSame('Output B', (string) $route_b->run()->getBody());
