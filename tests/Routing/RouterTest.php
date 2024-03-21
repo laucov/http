@@ -188,7 +188,6 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
      * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
-     * @uses Laucov\Http\Routing\AbstractRoutePrelude::__construct
      * @uses Laucov\Http\Routing\Call\Callback::__construct
      * @uses Laucov\Http\Routing\Call\Route::__construct
      * @uses Laucov\Http\Routing\Call\Route::createResponse
