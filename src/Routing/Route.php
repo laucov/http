@@ -34,6 +34,8 @@ use Laucov\Http\Routing\Call\Interfaces\RouteInterface;
 
 /**
  * Stores information about an HTTP route.
+ * 
+ * @deprecated 2.0.0 Use `\Laucov\Http\Routing\Call\Route` instead.
  */
 class Route implements RouteInterface
 {

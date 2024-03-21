@@ -30,6 +30,8 @@ namespace Laucov\Http\Routing;
 
 /**
  * Stores information about an HTTP route.
+ * 
+ * @deprecated 2.0.0 Use `\Laucov\Http\Routing\Call\Callback` instead.
  */
 class RouteClosure extends AbstractRouteCallable
 {

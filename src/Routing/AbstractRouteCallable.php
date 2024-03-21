@@ -34,6 +34,8 @@ use Laucov\Http\Server\ServerInfo;
 
 /**
  * Analyzes and stores route callables.
+ * 
+ * @deprecated 2.0.0 Use `\Laucov\Http\Routing\Call\Callback` instead.
  */
 abstract class AbstractRouteCallable
 {

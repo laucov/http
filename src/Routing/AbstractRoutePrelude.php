@@ -33,6 +33,8 @@ use Laucov\Http\Message\ResponseInterface;
 
 /**
  * Runs procedures before a request is sent to its route.
+ * 
+ * @deprecated 2.0.0 Use `\Laucov\Http\Routing\Call\Interfaces\PreludeInterface` instead.
  */
 abstract class AbstractRoutePrelude
 {

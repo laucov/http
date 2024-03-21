@@ -30,6 +30,8 @@ namespace Laucov\Http\Routing;
 
 /**
  * Stores information about a route's closure parameter type;
+ * 
+ * @deprecated 2.0.0 `\Laucov\Http\Routing\AbstractRouteCallable` is deprecated.
  */
 class RouteClosureType
 {
