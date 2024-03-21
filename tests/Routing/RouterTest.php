@@ -34,7 +34,7 @@ use Laucov\Http\Message\IncomingRequest;
 use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
-use Laucov\Http\Routing\AbstractRoutePrelude;
+use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
 use Laucov\Http\Routing\Call\Route;
 use Laucov\Http\Routing\Router;
 use Laucov\Http\Server\ServerInfo;
@@ -42,7 +42,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @coversDefaultClass \Laucov\Http\Routing\Router
- * @todo Test preludes with other constructor dependencies.
+ * @todo Test PreludeInterface class name requirement.
  * @todo Test invalid callbacks.
  */
 class RouterTest extends TestCase
@@ -173,69 +173,72 @@ class RouterTest extends TestCase
         }
     }
 
-    // /**
-    //  * @covers ::addPrelude
-    //  * @covers ::findRoute
-    //  * @covers ::setPreludes
-    //  * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
-    //  * @uses Laucov\Http\Message\AbstractMessage::getBody
-    //  * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
-    //  * @uses Laucov\Http\Message\IncomingRequest::__construct
-    //  * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
-    //  * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
-    //  * @uses Laucov\Http\Routing\AbstractRouteCallable::getPreludeNames
-    //  * @uses Laucov\Http\Routing\AbstractRouteCallable::setPreludeNames
-    //  * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
-    //  * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
-    //  * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
-    //  * @uses Laucov\Http\Routing\AbstractRoutePrelude::__construct
-    //  * @uses Laucov\Http\Routing\Call\Callback::__construct
-    //  * @uses Laucov\Http\Routing\Call\Route::__construct
-    //  * @uses Laucov\Http\Routing\Call\Route::createResponse
-    //  * @uses Laucov\Http\Routing\Call\Route::run
-    //  * @uses Laucov\Http\Routing\Router::__construct
-    //  * @uses Laucov\Http\Routing\Router::getRouteKeys
-    //  * @uses Laucov\Http\Routing\Router::setCallableRoute
-    //  * @uses Laucov\Http\Routing\Router::validateCallback
-    //  * @uses Laucov\Http\Routing\Router::validateReturnType
-    //  * @uses Laucov\Http\Server\ServerInfo::__construct
-    //  */
-    // public function testCanSetAndUsePreludes(): void
-    // {
-    //     // Add prelude and appendix options.
-    //     $this->router
-    //         ->addPrelude('p1', PreludeA::class, [])
-    //         ->addPrelude('p2', PreludeA::class, ['Hello, Universe!'])
-    //         ->addPrelude('p3', PreludeB::class, []);
+    /**
+     * @covers ::addPrelude
+     * @covers ::findRoute
+     * @covers ::setPreludes
+     * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
+     * @uses Laucov\Http\Message\AbstractMessage::getBody
+     * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
+     * @uses Laucov\Http\Message\IncomingRequest::__construct
+     * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
+     * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::getPreludeNames
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::setPreludeNames
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
+     * @uses Laucov\Http\Routing\AbstractRoutePrelude::__construct
+     * @uses Laucov\Http\Routing\Call\Callback::__construct
+     * @uses Laucov\Http\Routing\Call\Route::__construct
+     * @uses Laucov\Http\Routing\Call\Route::createResponse
+     * @uses Laucov\Http\Routing\Call\Route::run
+     * @uses Laucov\Http\Routing\Router::__construct
+     * @uses Laucov\Http\Routing\Router::getRouteKeys
+     * @uses Laucov\Http\Routing\Router::setCallableRoute
+     * @uses Laucov\Http\Routing\Router::validateCallback
+     * @uses Laucov\Http\Routing\Router::validateReturnType
+     * @uses Laucov\Http\Server\ServerInfo::__construct
+     */
+    public function testCanSetAndUsePreludes(): void
+    {
+        // Add prelude and appendix options.
+        $this->router
+            ->addPrelude('p1', PreludeA::class, [])
+            ->addPrelude('p2', PreludeA::class, ['Hello, Universe!'])
+            ->addPrelude('p3', PreludeB::class, []);
         
-    //     // Create closures.
-    //     $closure = fn (): string => 'Hello, World!';
+        // Create closures.
+        $closure = fn (): string => 'Hello, World!';
         
-    //     // Set routes.
-    //     $this->router
-    //         ->setPreludes('p1', 'p3')
-    //             ->setCallableRoute('GET', 'route-a', $closure)
-    //         ->setPreludes()
-    //             ->setCallableRoute('GET', 'route-b', $closure)
-    //         ->setPreludes('p2')
-    //             ->setCallableRoute('GET', 'route-c', $closure)
-    //         ->setPreludes('p3')
-    //             ->setCallableRoute('GET', 'route-d', $closure);
+        // Set routes.
+        $this->router
+            ->setPreludes('p1')
+                ->setCallableRoute('GET', 'route-a', $closure)
+            ->setPreludes()
+                ->setCallableRoute('GET', 'route-b', $closure)
+            ->setPreludes('p2')
+                ->setCallableRoute('GET', 'route-c', $closure)
+            ->setPreludes('p1', 'p3')
+                ->setCallableRoute('GET', 'route-d', $closure)
+                ->setCallableRoute('POST', 'route-d', $closure);
         
-    //     // Test routes.
-    //     $tests = [
-    //         ['route-a', 'Hello, World!'],
-    //         ['route-b', 'Hello, World!'],
-    //         ['route-c', 'Hello, Universe!'],
-    //         ['route-d', 'Hello, World!'],
-    //     ];
-    //     foreach ($tests as [$path, $expected]) {
-    //         $route = $this->findRoute('GET', $path);
-    //         $this->assertInstanceOf(Route::class, $route);
-    //         $content = (string) $route->run()->getBody();
-    //         $this->assertSame($expected, $content);
-    //     }
-    // }
+        // Test routes.
+        $tests = [
+            // Test non-interrupting preludes.
+            ['GET', 'route-a', 'Hello, World!'],
+            // Test removing all preludes.
+            ['GET', 'route-b', 'Hello, World!'],
+            // Test prelude with parameter that will interrupt the request.
+            ['GET', 'route-c', 'Hello, Universe!'],
+            // Test with prelude that interrupts POST requests.
+            ['GET', 'route-d', 'Hello, World!'],
+            ['POST', 'route-d', 'Interrupted a POST!'],
+        ];
+        foreach ($tests as [$method, $path, $expected]) {
+            $this->assertResponse($method, $path, $expected);
+        }
+    }
 
     /**
      * @covers ::findRoute
@@ -370,26 +373,13 @@ class Y
     }
 }
 
-// class Example
-// {
-//     public function __construct(protected string $name = 'John')
-//     {
-//     }
-
-//     public function greet(): string
-//     {
-//         return "Hello, {$this->name}!";
-//     }
-
-//     public function sayBye(): string
-//     {
-//         return "Goodbye, {$this->name}!";
-//     }
-// }
-
-class PreludeA extends AbstractRoutePrelude
+class PreludeA implements PreludeInterface
 {
     public static int $run_count = 0;
+
+    public function __construct(protected array $parameters)
+    {
+    }
 
     public function run(): null|string
     {
@@ -403,12 +393,23 @@ class PreludeA extends AbstractRoutePrelude
     }
 }
 
-class PreludeB extends AbstractRoutePrelude
+class PreludeB implements PreludeInterface
 {
     public static int $run_count = 0;
 
+    public function __construct(
+        protected RequestInterface $request,
+        protected ServerInfo $server,
+    ) {}
+
     public function run(): null|ResponseInterface
     {
+        if ($this->request->getMethod() === 'POST') {
+            $response = new OutgoingResponse();
+            $response->setBody('Interrupted a POST!');
+            return $response;
+        }
+
         static::$run_count++;
         return null;
     }
