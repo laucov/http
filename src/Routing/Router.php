@@ -132,7 +132,14 @@ class Router
         string $class_name,
         array $parameters,
     ): static {
+        if (!is_a($class_name, PreludeInterface::class, true)) {
+            $message = 'All prelude classes must implement %s.';
+            $message = sprintf($message, PreludeInterface::class);
+            throw new \InvalidArgumentException($message);
+        }
+
         $this->preludes[$name] = [$class_name, $parameters];
+
         return $this;
     }
 

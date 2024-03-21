@@ -310,6 +310,16 @@ class RouterTest extends TestCase
     }
 
     /**
+     * @covers ::addPrelude
+     * @uses Laucov\Http\Routing\Router::__construct
+     */
+    public function testPreludesMustImplementThePreludeInterface(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->router->addPrelude('foo', NotAPrelude::class, []);
+    }
+
+    /**
      * Assert that a route is found for the given `$method` and `$path`.
      * 
      * Also assert that the route response contains `$expected` as its content.
@@ -345,31 +355,11 @@ class RouterTest extends TestCase
     }
 }
 
-class X
+class NotAPrelude
 {
-    public function __construct(
-        protected string $greeting,
-        protected string $name,
-    ) {}
-
-    public function greet(): string
+    public function run(): null|string
     {
-        return "{$this->greeting}, {$this->name}!";
-    }
-}
-
-class Y
-{
-    public function getMethod(RequestInterface $request): ResponseInterface
-    {
-        $response = new OutgoingResponse();
-        $response->setBody($request->getMethod());
-        return $response;
-    }
-
-    public function getProtocol(ServerInfo $server): string
-    {
-        return $server->getProtocolVersion() ?? 'unknown';
+        return null;
     }
 }
 
@@ -412,5 +402,33 @@ class PreludeB implements PreludeInterface
 
         static::$run_count++;
         return null;
+    }
+}
+
+class X
+{
+    public function __construct(
+        protected string $greeting,
+        protected string $name,
+    ) {}
+
+    public function greet(): string
+    {
+        return "{$this->greeting}, {$this->name}!";
+    }
+}
+
+class Y
+{
+    public function getMethod(RequestInterface $request): ResponseInterface
+    {
+        $response = new OutgoingResponse();
+        $response->setBody($request->getMethod());
+        return $response;
+    }
+
+    public function getProtocol(ServerInfo $server): string
+    {
+        return $server->getProtocolVersion() ?? 'unknown';
     }
 }
