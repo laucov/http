@@ -62,6 +62,11 @@ class Router
     protected array $activePreludes = [];
 
     /**
+     * Default server information object.
+     */
+    protected ServerInfo $defaultServerInfo;
+
+    /**
      * Dependency repository.
      */
     protected Repository $dependencies;
@@ -184,10 +189,12 @@ class Router
         }
 
         // Set temporary dependencies.
-        $this->dependencies->setValue(RequestInterface::class, $request);
-        if ($server !== null) {
-            $this->dependencies->setValue(ServerInfo::class, $server);
+        if ($server === null) {
+            $this->defaultServerInfo ??= new ServerInfo([]);
+            $server = $this->defaultServerInfo;
         }
+        $this->dependencies->setValue(RequestInterface::class, $request);
+        $this->dependencies->setValue(ServerInfo::class, $server);
 
         // Create preludes.
         $preludes = [];

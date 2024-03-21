@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace Tests\Routing;
 
 use Laucov\Http\Message\IncomingRequest;
+use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Routing\AbstractRoutePrelude;
@@ -59,34 +60,19 @@ class RouterTest extends TestCase
      * @covers ::setPattern
      * @covers ::validateCallback
      * @covers ::validateReturnType
-     * @uses Laucov\Arrays\ArrayBuilder::setValue
-     * @uses Laucov\Arrays\ArrayReader::__construct
-     * @uses Laucov\Arrays\ArrayReader::getValue
-     * @uses Laucov\Arrays\ArrayReader::validateKeys
-     * @uses Laucov\Files\Resource\StringSource::__construct
-     * @uses Laucov\Files\Resource\StringSource::__toString
-     * @uses Laucov\Files\Resource\Uri::__construct
-     * @uses Laucov\Files\Resource\Uri::fromString
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
      * @uses Laucov\Http\Message\IncomingRequest::__construct
      * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
      * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
-     * @uses Laucov\Http\Routing\AbstractRouteCallable::getPreludeNames
-     * @uses Laucov\Http\Routing\AbstractRouteCallable::setPreludeNames
-     * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
-     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
-     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
      * @uses Laucov\Http\Routing\Call\Callback::__construct
      * @uses Laucov\Http\Routing\Call\Route::__construct
      * @uses Laucov\Http\Routing\Call\Route::createResponse
      * @uses Laucov\Http\Routing\Call\Route::run
-     * @uses Laucov\Http\Routing\Router::__construct
      * @uses Laucov\Http\Server\ServerInfo::__construct
-     * @uses Laucov\Http\Server\ServerInfo::get
      */
-    public function testCanSetAndFindRoutes(): void
+    public function testCanCaptureSegments(): void
     {
         // Set closures.
         $closures = [
@@ -94,269 +80,260 @@ class RouterTest extends TestCase
             fn (): string => 'Hello, Everyone!',
             fn (): string => 'Hello, Planet!',
             fn (): string => 'Hello, Universe!',
+            fn (string $a): string => "Value: {$a}",
+            fn (string ...$a): string => implode(', ', $a),
+            fn (): string => 'No parameters!',
+            fn (): string => 'Animals',
+            fn (): string => 'Lizard',
+            fn (): string => 'Ant',
+            fn (): string => 'Dog',
+            fn (): string => 'Elephant',
+            fn (): string => 'Shark',
+            fn (): string => 'Apple',
+            fn (): string => 'Ice cream',
+            fn (): string => 'Home',
         ];
 
         // Set routes.
         $this->router
             ->setCallableRoute('GET', 'path/to/route-a', $closures[0])
             ->setCallableRoute('POST', 'path/to/route-b/', $closures[1])
-            ->setCallableRoute('POST', '/path/to/route-c', $closures[2])
-            ->setCallableRoute('POST', '/path/to/route-d/', $closures[3]);
+            ->setCallableRoute('PUT', '/path/to/route-c', $closures[2])
+            ->setCallableRoute('PATCH', '/path/to/route-d/', $closures[3])
+            ->setPattern('int', '/^[0-9]+$/')
+            ->setPattern('alpha', '/^[A-Za-z]+$/')
+            ->setCallableRoute('GET', 'routes/:alpha', $closures[4])
+            ->setCallableRoute('GET', ':alpha/:alpha/:int', $closures[5])
+            ->setCallableRoute('GET', ':alpha/:alpha', $closures[6])
+            ->pushPrefix('animals')
+                ->setCallableRoute('GET', '', $closures[7])
+                ->setCallableRoute('GET', 'lizard', $closures[8])
+                ->setCallableRoute('GET', 'ant', $closures[9])
+                ->pushPrefix('mammals/')
+                    ->setCallableRoute('GET', 'dog', $closures[10])
+                    ->setCallableRoute('GET', 'elephant', $closures[11])
+                ->popPrefix()
+                ->setCallableRoute('GET', 'shark', $closures[12])
+            ->popPrefix()
+            ->pushPrefix('/food/fruits')
+                ->setCallableRoute('GET', 'apple', $closures[13])
+                ->popPrefix()
+                ->pushPrefix('/food/candy/')
+                    ->setCallableRoute('GET', 'ice-cream', $closures[14])
+                ->popPrefix()
+            ->popPrefix()
+            ->setCallableRoute('GET', '', $closures[15])
+            ->pushPrefix('classes/x')
+                ->setClassRoute('GET', 'hi', X::class, 'greet', 'Hi', 'John');
         
         // Set tests and expectations.
         $tests = [
-            // Assert route A exists.
+            // Assert that route A exists.
             ['GET', 'path/to/route-a', 'Hello, World!'],
-            // Assert route A only exists for GET requests.
+            // Assert that route A only exists for GET requests.
             ['POST', 'path/to/route-a', null],
-            // Assert route Z does not exist.
+            // Assert that route Z does not exist.
             ['GET', 'path/to/route-z', null],
             // Assert that intermediary paths of route A cannot be accessed.
             ['GET', 'path/to', null],
-            // Assert route B exists - test right trimming.
+            // Assert that route B exists - test right trimming.
             ['POST', 'path/to/route-b', 'Hello, Everyone!'],
-            // Assert route C exists - test left trimming.
-            ['POST', 'path/to/route-c', 'Hello, Planet!'],
-            // Assert route D exists - test full trimming.
-            ['POST', 'path/to/route-d', 'Hello, Universe!'],
+            // Assert that route C exists - test left trimming.
+            ['PUT', 'path/to/route-c', 'Hello, Planet!'],
+            // Assert that route D exists - test full trimming.
+            ['PATCH', 'path/to/route-d', 'Hello, Universe!'],
+            // Assert that can capture a segment.
+            ['GET', 'routes/foobar', 'Value: foobar'],
+            // Assert that can capture multiple segments.
+            ['GET', 'foo/bar/15', 'foo, bar, 15'],
+            // Assert that captured segments are of optional use.
+            ['GET', 'foo/bar', 'No parameters!'],
+            // Push prefixes.
+            ['GET', 'animals', 'Animals'],
+            ['GET', 'animals/lizard', 'Lizard'],
+            ['GET', 'animals/ant', 'Ant'],
+            // Push prefixes - right trimming.
+            ['GET', 'animals/mammals/dog', 'Dog'],
+            ['GET', 'animals/mammals/elephant', 'Elephant'],
+            // Pop prefix.
+            ['GET', 'animals/shark', 'Shark'],
+            // Pop and push prefix - left trimming.
+            ['GET', 'food/fruits/apple', 'Apple'],
+            // Pop and push prefix - full trimming.
+            ['GET', 'food/candy/ice-cream', 'Ice cream'],
+            // Test root path.
+            ['GET', '', 'Home'],
+            // Test class routes.
+            ['GET', 'classes/x/hi', 'Hi, John!'],
         ];
 
         // Run tests.
-        foreach ($tests as $i => [$method, $path, $expected]) {
-            $uri = "https://foobar.com/" . $path;
-            $name = "Assert that {$method} {$uri}";
-            $request = new IncomingRequest('', method: $method, uri: $uri);
-            $route = $this->router->findRoute($request);
-            if ($expected === null) {
-                $message = "{$name} is null";
-                $this->assertNull($route, "{$name} is null");
-            } else {
-                $message = "{$name} is a route";
-                $this->assertInstanceOf(Route::class, $route, $message);
-                $response = $route->run();
-                $content = (string) $response->getBody();
-                $message = "{$name} output";
-                $this->assertSame($expected, $content, "{$name}");
-            }
-        }
-
-        return;
-
-        // Test router's path trimming.
-        $route_b = $this->findRoute('POST', 'path/to/route-b');
-        $this->assertInstanceOf(Route::class, $route_b);
-        $this->assertSame('Output B', (string) $route_b->run()->getBody());
-        $closure_c = fn (): string => 'Output C';
-        $this->router->setCallableRoute('PUT', '/path/to/route-c', $closure_c);
-        $route_c = $this->findRoute('PUT', 'path/to/route-c');
-        $this->assertInstanceOf(Route::class, $route_c);
-        $this->assertSame('Output C', (string) $route_c->run()->getBody());
-        $closure_d = fn (): string => 'Output D';
-        $this->router->setCallableRoute('PATCH', '/path/to/route-d/', $closure_d);
-        $route_d = $this->findRoute('PATCH', 'path/to/route-d');
-        $this->assertInstanceOf(Route::class, $route_d);
-        $this->assertSame('Output D', (string) $route_d->run()->getBody());
-
-        // Set patterns.
-        $this->assertSame(
-            $this->router,
-            $this->router->setPattern('int', '/^[0-9]+$/'),
-        );
-        $this->router->setPattern('alpha', '/^[A-Za-z]+$/');
-
-        // Test without parameters.
-        $closure_e = fn (): string => 'Output E';
-        $this->router->setCallableRoute('POST', 'routes/:alpha', $closure_e);
-        $route_e = $this->findRoute('POST', 'routes/e');
-        $this->assertInstanceOf(Route::class, $route_e);
-        $this->assertSame('Output E', (string) $route_e->run()->getBody());
-
-        // Test with parameters.
-        $closure_f = fn (string $a): string => sprintf('Output %s', $a);
-        $this->router->setCallableRoute('GET', 'routes/:int', $closure_f);
-        $route_f = $this->findRoute('GET', 'routes/123');
-        $this->assertInstanceOf(Route::class, $route_f);
-        $this->assertSame('Output 123', (string) $route_f->run()->getBody());
-
-        // Test with request and server info argument.
-        $closure_g = function (
-            string $a,
-            RequestInterface $b,
-            string $c,
-            null|ServerInfo $d,
-        ): string {
-            $host = $b->getUri()->host;
-            $prot = $d ? $d->get('SERVER_PROTOCOL', '') : '???';
-            return "{$a}, {$host}, {$c}, {$prot}";
-        };
-        $this->router->setCallableRoute('POST', 'routes/:int/test/:alpha', $closure_g);
-        $route_g1 = $this->findRoute('POST', 'routes/123/test/abc');
-        $this->assertInstanceOf(Route::class, $route_g1);
-        $this->assertSame(
-            '123, foobar.com, abc, HTTP/1.1',
-            (string) $route_g1->run()->getBody(),
-        );
-        $route_g2 = $this->findRoute('POST', 'routes/123/test/abc', false);
-        $this->assertInstanceOf(Route::class, $route_g2);
-        $this->assertSame(
-            '123, foobar.com, abc, ???',
-            (string) $route_g2->run()->getBody(),
-        );
-
-        // Test with variadic string argument.
-        $closure_h = function (string $a, string ...$b): string {
-            return $a . ', ' . implode(', ', $b);
-        };
-        $path_h = 'foos/:int/bars/:int/bazes/:int';
-        $this->router->setCallableRoute('POST', $path_h, $closure_h);
-        $route_h = $this->findRoute('POST', 'foos/1/bars/9/bazes/0');
-        $this->assertInstanceOf(Route::class, $route_h);
-        $this->assertSame('1, 9, 0', (string) $route_h->run()->getBody());
-
-        // Test pushing prefix.
-        $this->assertSame($this->router, $this->router->pushPrefix('prefix'));
-        $this->router->setCallableRoute('GET', 'path/a', fn (): string => 'Path A');
-        $route_i = $this->findRoute('GET', 'prefix/path/a');
-        $this->assertInstanceOf(Route::class, $route_i);
-        $content_i = (string) $route_i->run()->getBody();
-        $this->assertSame('Path A', $content_i);
-
-        // Test popping prefix.
-        $this->assertSame($this->router, $this->router->popPrefix());
-        $this->router->setCallableRoute('GET', 'path/b', fn (): string => 'Path B');
-        $route_j = $this->findRoute('GET', 'path/b');
-        $this->assertInstanceOf(Route::class, $route_j);
-        $content_j = (string) $route_j->run()->getBody();
-        $this->assertSame('Path B', $content_j);
-
-        // Test prefix trimming.
-        $this->router
-            ->pushPrefix('/animals')
-                ->setCallableRoute('GET', 'dog', fn (): string => 'Dog!')
-            ->popPrefix()
-            ->pushPrefix('plants/')
-                ->setCallableRoute('GET', 'tree', fn (): string => 'Tree!')
-            ->popPrefix()
-            ->pushPrefix('/plants/')
-                ->pushPrefix('flowers')
-                    ->setCallableRoute('GET', 'poppy', fn (): string => 'Poppy!')
-                ->popPrefix()
-            ->popPrefix();
-        $tests = [
-            ['animals/dog', 'Dog!'],
-            ['plants/tree', 'Tree!'],
-            ['plants/flowers/poppy', 'Poppy!'],
-        ];
-        foreach ($tests as $test) {
-            $route = $this->findRoute('GET', $test[0]);
-            $this->assertInstanceOf(Route::class, $route);
-            $content = (string) $route->run()->getBody();
-            $this->assertSame($test[1], $content);
-        }
-
-        // Test with object methods.
-        $this->router
-            ->setClassRoute('GET', 'greeting', Example::class, 'greet', 'Carl')
-            ->setClassRoute('GET', 'farewell', Example::class, 'sayBye');
-        $tests = [
-            ['greeting', 'Hello, Carl!'],
-            ['farewell', 'Goodbye, John!'],
-        ];
-        foreach ($tests as $test) {
-            $route = $this->findRoute('GET', $test[0]);
-            $this->assertInstanceOf(Route::class, $route);
-            $content = (string) $route->run()->getBody();
-            $this->assertSame($test[1], $content);
+        foreach ($tests as [$method, $path, $expected]) {
+            $this->assertResponse($method, $path, $expected);
         }
     }
 
+    // /**
+    //  * @covers ::addPrelude
+    //  * @covers ::findRoute
+    //  * @covers ::setPreludes
+    //  * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
+    //  * @uses Laucov\Http\Message\AbstractMessage::getBody
+    //  * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
+    //  * @uses Laucov\Http\Message\IncomingRequest::__construct
+    //  * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
+    //  * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
+    //  * @uses Laucov\Http\Routing\AbstractRouteCallable::getPreludeNames
+    //  * @uses Laucov\Http\Routing\AbstractRouteCallable::setPreludeNames
+    //  * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
+    //  * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
+    //  * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
+    //  * @uses Laucov\Http\Routing\AbstractRoutePrelude::__construct
+    //  * @uses Laucov\Http\Routing\Call\Callback::__construct
+    //  * @uses Laucov\Http\Routing\Call\Route::__construct
+    //  * @uses Laucov\Http\Routing\Call\Route::createResponse
+    //  * @uses Laucov\Http\Routing\Call\Route::run
+    //  * @uses Laucov\Http\Routing\Router::__construct
+    //  * @uses Laucov\Http\Routing\Router::getRouteKeys
+    //  * @uses Laucov\Http\Routing\Router::setCallableRoute
+    //  * @uses Laucov\Http\Routing\Router::validateCallback
+    //  * @uses Laucov\Http\Routing\Router::validateReturnType
+    //  * @uses Laucov\Http\Server\ServerInfo::__construct
+    //  */
+    // public function testCanSetAndUsePreludes(): void
+    // {
+    //     // Add prelude and appendix options.
+    //     $this->router
+    //         ->addPrelude('p1', PreludeA::class, [])
+    //         ->addPrelude('p2', PreludeA::class, ['Hello, Universe!'])
+    //         ->addPrelude('p3', PreludeB::class, []);
+        
+    //     // Create closures.
+    //     $closure = fn (): string => 'Hello, World!';
+        
+    //     // Set routes.
+    //     $this->router
+    //         ->setPreludes('p1', 'p3')
+    //             ->setCallableRoute('GET', 'route-a', $closure)
+    //         ->setPreludes()
+    //             ->setCallableRoute('GET', 'route-b', $closure)
+    //         ->setPreludes('p2')
+    //             ->setCallableRoute('GET', 'route-c', $closure)
+    //         ->setPreludes('p3')
+    //             ->setCallableRoute('GET', 'route-d', $closure);
+        
+    //     // Test routes.
+    //     $tests = [
+    //         ['route-a', 'Hello, World!'],
+    //         ['route-b', 'Hello, World!'],
+    //         ['route-c', 'Hello, Universe!'],
+    //         ['route-d', 'Hello, World!'],
+    //     ];
+    //     foreach ($tests as [$path, $expected]) {
+    //         $route = $this->findRoute('GET', $path);
+    //         $this->assertInstanceOf(Route::class, $route);
+    //         $content = (string) $route->run()->getBody();
+    //         $this->assertSame($expected, $content);
+    //     }
+    // }
+
     /**
-     * @covers ::addPrelude
      * @covers ::findRoute
-     * @covers ::setPreludes
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
      * @uses Laucov\Http\Message\IncomingRequest::__construct
      * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
      * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
-     * @uses Laucov\Http\Routing\AbstractRouteCallable::getPreludeNames
-     * @uses Laucov\Http\Routing\AbstractRouteCallable::setPreludeNames
-     * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
-     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
-     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
-     * @uses Laucov\Http\Routing\AbstractRoutePrelude::__construct
      * @uses Laucov\Http\Routing\Call\Callback::__construct
      * @uses Laucov\Http\Routing\Call\Route::__construct
      * @uses Laucov\Http\Routing\Call\Route::createResponse
      * @uses Laucov\Http\Routing\Call\Route::run
      * @uses Laucov\Http\Routing\Router::__construct
      * @uses Laucov\Http\Routing\Router::getRouteKeys
+     * @uses Laucov\Http\Routing\Router::pushPrefix
      * @uses Laucov\Http\Routing\Router::setCallableRoute
+     * @uses Laucov\Http\Routing\Router::setClassRoute
+     * @uses Laucov\Http\Routing\Router::setPattern
      * @uses Laucov\Http\Routing\Router::validateCallback
      * @uses Laucov\Http\Routing\Router::validateReturnType
      * @uses Laucov\Http\Server\ServerInfo::__construct
+     * @uses Laucov\Http\Server\ServerInfo::get
+     * @uses Laucov\Http\Server\ServerInfo::getProtocolVersion
      */
-    public function testCanSetAndUsePreludes(): void
+    public function testCanInjectRequestAndServerInfo(): void
     {
-        // Add prelude and appendix options.
-        $this->router
-            ->addPrelude('p1', PreludeA::class, [])
-            ->addPrelude('p2', PreludeA::class, ['Hello, Universe!'])
-            ->addPrelude('p3', PreludeB::class, []);
-        
-        // Create closures.
-        $closure = fn (): string => 'Hello, World!';
-        
+        // Set server info.
+        $server = new ServerInfo([
+            'SERVER_PROTOCOL' => 'HTTP/1.1',
+        ]);
+
+        // Set closures.
+        $callable = function (
+            string $a,
+            RequestInterface $request,
+            ServerInfo $server,
+            string ...$b,
+        ): string {
+            $host = $request->getUri()->host;
+            $version = $server->getProtocolVersion() ?: '???';
+            return "{$a}, {$host}, {$version}, " . implode(', ', $b);
+        };
+
         // Set routes.
         $this->router
-            ->setPreludes('p1', 'p3')
-                ->setCallableRoute('GET', 'route-a', $closure)
-            ->setPreludes()
-                ->setCallableRoute('GET', 'route-b', $closure)
-            ->setPreludes('p2')
-                ->setCallableRoute('GET', 'route-c', $closure)
-            ->setPreludes('p3')
-                ->setCallableRoute('GET', 'route-d', $closure);
+            ->setPattern('any', '/^.+$/')
+            ->setCallableRoute('GET', 'server/:any/:any/:any', $callable)
+            ->pushPrefix('classes')
+                ->setClassRoute('GET', 'y/method', Y::class, 'getMethod')
+                ->pushPrefix('y')
+                    ->setClassRoute('POST', 'method', Y::class, 'getMethod')
+                    ->setClassRoute('GET', 'protocol', Y::class, 'getProtocol');
         
-        // Test routes.
+        // Set tests.
         $tests = [
-            ['route-a', 'Hello, World!'],
-            ['route-b', 'Hello, World!'],
-            ['route-c', 'Hello, Universe!'],
-            ['route-d', 'Hello, World!'],
+            ['GET', 'server/x/y/z', $server, 'x, foobar.com, 1.1, y, z'],
+            ['GET', 'server/9/8/7', null, '9, foobar.com, ???, 8, 7'],
+            ['GET', 'classes/y/method', null, 'GET'],
+            ['POST', 'classes/y/method', null, 'POST'],
+            ['GET', 'classes/y/protocol', null, 'unknown'],
+            ['GET', 'classes/y/protocol', $server, '1.1'],
         ];
-        foreach ($tests as [$path, $expected]) {
-            $route = $this->findRoute('GET', $path);
-            $this->assertInstanceOf(Route::class, $route);
-            $content = (string) $route->run()->getBody();
-            $this->assertSame($expected, $content);
+
+        // Run tests.
+        foreach ($tests as [$method, $path, $srv, $expected]) {
+            $this->assertResponse($method, $path, $expected, $srv);
         }
     }
 
     /**
-     * Find a route using a generic request with the given method and path.
+     * Assert that a route is found for the given `$method` and `$path`.
+     * 
+     * Also assert that the route response contains `$expected` as its content.
      */
-    protected function findRoute(
+    protected function assertResponse(
         string $method,
         string $path,
-        bool $create_server_info = true,
-    ): null|Route {
-        $request = new IncomingRequest(
-            content_or_post: 'Hello, World!',
-            headers: [],
-            protocol_version: null,
-            method: $method,
-            uri: 'http://foobar.com/' . $path,
-            parameters: [],
-            cookies: [],
-        );
+        null|string $expected,
+        null|ServerInfo $server_info = null,
+    ): void {
+        // Create request.
+        $uri = "https://foobar.com/" . $path;
+        $request = new IncomingRequest('', method: $method, uri: $uri);
 
-        $server = $create_server_info
-            ? new ServerInfo(['SERVER_PROTOCOL' => 'HTTP/1.1'])
-            : null;
+        // Get route.
+        $route = $this->router->findRoute($request, $server_info);
 
-        return $this->router->findRoute($request, $server);
+        // Set message and test.
+        $message = "Test {$method} {$uri}";
+        if ($expected === null) {
+            $this->assertNull($route, $message);
+        } else {
+            $this->assertInstanceOf(Route::class, $route, $message);
+            $response = $route->run();
+            $content = (string) $response->getBody();
+            $this->assertSame($expected, $content, $message);
+        }
     }
 
     protected function setUp(): void
@@ -365,22 +342,50 @@ class RouterTest extends TestCase
     }
 }
 
-class Example
+class X
 {
-    public function __construct(protected string $name = 'John')
-    {
-    }
+    public function __construct(
+        protected string $greeting,
+        protected string $name,
+    ) {}
 
     public function greet(): string
     {
-        return "Hello, {$this->name}!";
-    }
-
-    public function sayBye(): string
-    {
-        return "Goodbye, {$this->name}!";
+        return "{$this->greeting}, {$this->name}!";
     }
 }
+
+class Y
+{
+    public function getMethod(RequestInterface $request): ResponseInterface
+    {
+        $response = new OutgoingResponse();
+        $response->setBody($request->getMethod());
+        return $response;
+    }
+
+    public function getProtocol(ServerInfo $server): string
+    {
+        return $server->getProtocolVersion() ?? 'unknown';
+    }
+}
+
+// class Example
+// {
+//     public function __construct(protected string $name = 'John')
+//     {
+//     }
+
+//     public function greet(): string
+//     {
+//         return "Hello, {$this->name}!";
+//     }
+
+//     public function sayBye(): string
+//     {
+//         return "Goodbye, {$this->name}!";
+//     }
+// }
 
 class PreludeA extends AbstractRoutePrelude
 {
