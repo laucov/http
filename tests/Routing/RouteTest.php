@@ -32,8 +32,9 @@ namespace Tests\Routing;
 
 use Laucov\Http\Message\IncomingRequest;
 use Laucov\Http\Message\OutgoingResponse;
+use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
-use Laucov\Http\Routing\AbstractRoutePrelude;
+use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
 use Laucov\Http\Routing\Route;
 use Laucov\Http\Routing\RouteClosure;
 use PHPUnit\Framework\TestCase;
@@ -137,9 +138,15 @@ class RouteTest extends TestCase
     }
 }
 
-class Prelude1 extends AbstractRoutePrelude
+class Prelude1 implements PreludeInterface
 {
     public static bool $tested = false;
+
+    public function __construct(
+        protected RequestInterface $request,
+        protected array $parameters,
+    ) {
+    }
 
     public function run(): null|string
     {
@@ -152,9 +159,15 @@ class Prelude1 extends AbstractRoutePrelude
     }
 }
 
-class Prelude2 extends AbstractRoutePrelude
+class Prelude2 implements PreludeInterface
 {
     public static bool $tested = false;
+
+    public function __construct(
+        protected RequestInterface $request,
+        protected array $parameters,
+    ) {
+    }
 
     public function run(): null
     {
