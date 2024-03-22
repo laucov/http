@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace Tests\Routing;
 
 use Laucov\Http\Message\IncomingRequest;
+use Laucov\Http\Message\IncomingResponse;
 use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
@@ -42,12 +43,33 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @coversDefaultClass \Laucov\Http\Routing\Router
- * @todo Test PreludeInterface class name requirement.
- * @todo Test invalid callbacks.
  */
 class RouterTest extends TestCase
 {
     protected Router $router;
+
+    public function invalidCallbackProvider(): array
+    {
+        return [
+            // Test with invalid closure parameters.
+            [fn (array $array): string => ''],
+            [fn (string $a, object $b): string => ''],
+            // Test with invalid closure return types.
+            [fn (string $a) => 'Some text'],
+            [fn (string $a): array => []],
+            [fn (): \stdClass => new \stdClass()],
+            [fn (): string|array => ''],
+            [fn (): ResponseInterface&IncomingResponse => new IncomingResponse('')],
+            // Test with invalid method parameters.
+            [[Z::class, 'a']],
+            [[Z::class, 'b']],
+            // Test with invalid return type.
+            [[Z::class, 'c']],
+            [[Z::class, 'd']],
+            [[Z::class, 'e']],
+            [[Z::class, 'f']],
+        ];
+    }
 
     /**
      * @covers ::__construct
@@ -92,6 +114,7 @@ class RouterTest extends TestCase
             fn (): string => 'Apple',
             fn (): string => 'Ice cream',
             fn (): string => 'Home',
+            fn (string $a): string|ResponseInterface => 'Hi, World!',
         ];
 
         // Set routes.
@@ -100,6 +123,7 @@ class RouterTest extends TestCase
             ->setCallableRoute('POST', 'path/to/route-b/', $closures[1])
             ->setCallableRoute('PUT', '/path/to/route-c', $closures[2])
             ->setCallableRoute('PATCH', '/path/to/route-d/', $closures[3])
+            ->setCallableRoute('GET', 'path/to/route-e', $closures[16])
             ->setPattern('int', '/^[0-9]+$/')
             ->setPattern('alpha', '/^[A-Za-z]+$/')
             ->setCallableRoute('GET', 'routes/:alpha', $closures[4])
@@ -142,6 +166,8 @@ class RouterTest extends TestCase
             ['PUT', 'path/to/route-c', 'Hello, Planet!'],
             // Assert that route D exists - test full trimming.
             ['PATCH', 'path/to/route-d', 'Hello, Universe!'],
+            // Assert that routes can have union return types.
+            ['GET', 'path/to/route-e', 'Hi, World!'],
             // Assert that can capture a segment.
             ['GET', 'routes/foobar', 'Value: foobar'],
             // Assert that can capture multiple segments.
@@ -319,6 +345,26 @@ class RouterTest extends TestCase
     }
 
     /**
+     * @covers ::validateCallback
+     * @covers ::validateReturnType
+     * @uses Laucov\Http\Routing\Router::__construct
+     * @uses Laucov\Http\Routing\Router::getRouteKeys
+     * @uses Laucov\Http\Routing\Router::setCallableRoute
+     * @uses Laucov\Http\Routing\Router::setClassRoute
+     * @dataProvider invalidCallbackProvider
+     */
+    public function testValidatesCallbacks(array|callable $callback): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        if (is_array($callback)) {
+            $this->router->setClassRoute('GET', 'foo/bar', ...$callback);
+        } else {
+            $this->router->setCallableRoute('GET', 'foo/bar', $callback);
+        }
+    }
+
+    /**
      * Assert that a route is found for the given `$method` and `$path`.
      * 
      * Also assert that the route response contains `$expected` as its content.
@@ -429,5 +475,38 @@ class Y
     public function getProtocol(ServerInfo $server): string
     {
         return $server->getProtocolVersion() ?? 'unknown';
+    }
+}
+
+class Z
+{
+    public function a(): array
+    {
+        return [];
+    }
+
+    public function b(string $a): int
+    {
+        return 123456;
+    }
+    
+    public function c(array $foo): string
+    {
+        return 'Hello, World!';
+    }
+
+    public function d(string $a, float $b): string
+    {
+        return 'Hello, Universe!';
+    }
+    
+    public function e(string $a, float $b): string|array
+    {
+        return 'Hello, Planet!';
+    }
+
+    public function f(string $a, float $b): ResponseInterface&IncomingResponse
+    {
+        return new IncomingResponse('');
     }
 }
