@@ -30,8 +30,11 @@ declare(strict_types=1);
 
 namespace Tests\Routing;
 
+use Laucov\Http\Message\IncomingRequest;
 use Laucov\Http\Message\OutgoingResponse;
+use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
+use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
 use Laucov\Http\Routing\Route;
 use Laucov\Http\Routing\RouteClosure;
 use PHPUnit\Framework\TestCase;
@@ -43,15 +46,14 @@ class RouteTest extends TestCase
 {
     /**
      * @covers ::__construct
+     * @covers ::createResponse
      * @covers ::run
-     * @uses Laucov\Files\Resource\StringSource::__construct
-     * @uses Laucov\Files\Resource\StringSource::__toString
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
      * @uses Laucov\Http\Routing\RouteClosure::__construct
-     * @uses Laucov\Http\Routing\RouteClosure::validate
-     * @uses Laucov\Http\Routing\RouteClosure::validateParameterTypes
-     * @uses Laucov\Http\Routing\RouteClosure::validateReturnType
      */
     public function testCanRun(): void
     {
@@ -86,5 +88,89 @@ class RouteTest extends TestCase
             $this->assertInstanceOf(ResponseInterface::class, $response);
             $this->assertSame('Hello, World!', (string) $response->getBody());
         }
+    }
+
+    /**
+     * @covers ::run
+     * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
+     * @uses Laucov\Http\Message\AbstractMessage::getBody
+     * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
+     * @uses Laucov\Http\Message\IncomingRequest::__construct
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validate
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateParameterTypes
+     * @uses Laucov\Http\Routing\AbstractRouteCallable::validateReturnType
+     * @uses Laucov\Http\Routing\Route::__construct
+     * @uses Laucov\Http\Routing\Route::createResponse
+     * @uses Laucov\Http\Routing\RouteClosure::__construct
+     */
+    public function testCanUsePreludes(): void
+    {
+        // Create closure.
+        $closure = new RouteClosure(fn (): string => 'Hello, World!');
+        $request = new IncomingRequest('');
+        
+        // Create preludes.
+        $p1 = new Prelude1($request, []);
+        $p2 = new Prelude2($request, []);
+
+        // Run without them.
+        $route = new Route($closure, [], []);
+        $response = $route->run();
+        $this->assertSame('Hello, World!', (string) $response->getBody());
+
+        // Set route preludes.
+        $route = new Route($closure, [], [$p1, $p2]);
+        $response = $route->run();
+        $this->assertSame('Hello, World!', (string) $response->getBody());
+        $this->assertTrue(Prelude1::$tested);
+        $this->assertTrue(Prelude2::$tested);
+
+        // Create interrupting prelude.
+        $p3 = new Prelude1($request, [true]);
+        Prelude1::$tested = false;
+        Prelude2::$tested = false;
+        $route = new Route($closure, [], [$p1, $p3, $p2]);
+        $response = $route->run();
+        $this->assertSame('Hello, Everyone!', (string) $response->getBody());
+        $this->assertTrue(Prelude1::$tested);
+        $this->assertFalse(Prelude2::$tested);
+    }
+}
+
+class Prelude1 implements PreludeInterface
+{
+    public static bool $tested = false;
+
+    public function __construct(
+        protected RequestInterface $request,
+        protected array $parameters,
+    ) {
+    }
+
+    public function run(): null|string
+    {
+        if ($this->parameters[0] ?? false) {
+            return 'Hello, Everyone!';
+        }
+
+        static::$tested = true;
+        return null;
+    }
+}
+
+class Prelude2 implements PreludeInterface
+{
+    public static bool $tested = false;
+
+    public function __construct(
+        protected RequestInterface $request,
+        protected array $parameters,
+    ) {
+    }
+
+    public function run(): null
+    {
+        static::$tested = true;
+        return null;
     }
 }

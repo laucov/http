@@ -30,6 +30,8 @@ namespace Laucov\Http\Routing;
 
 /**
  * Stores information about an HTTP route.
+ * 
+ * @deprecated 2.0.0 Use `\Laucov\Http\Routing\Call\Callback` instead.
  */
 class RouteClassMethod extends AbstractRouteCallable
 {
@@ -42,12 +44,11 @@ class RouteClassMethod extends AbstractRouteCallable
         mixed ...$constructor_args,
     ) {
         // Validate and store types.
-        $reflection_c = new \ReflectionClass($class_name);
-        $reflection_m = $reflection_c->getMethod($method_name);
-        $this->validate($reflection_m);
+        $reflection = new \ReflectionMethod($class_name, $method_name);
+        $this->validate($reflection);
 
         // Create callback.
-        $this->closure = $reflection_m->isStatic()
+        $this->closure = $reflection->isStatic()
             ? \Closure::fromCallable([$class_name, $method_name])
             : function (mixed ...$args) use (
                 $class_name,

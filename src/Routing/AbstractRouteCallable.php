@@ -34,6 +34,8 @@ use Laucov\Http\Server\ServerInfo;
 
 /**
  * Analyzes and stores route callables.
+ * 
+ * @deprecated 2.0.0 Use `\Laucov\Http\Routing\Call\Callback` instead.
  */
 abstract class AbstractRouteCallable
 {
@@ -71,6 +73,32 @@ abstract class AbstractRouteCallable
      * Closure return type.
      */
     public string $returnType;
+
+    /**
+     * Route prelude names.
+     * 
+     * @var array<string>
+     */
+    protected array $preludeNames = [];
+
+    /**
+     * Get the callable prelude names.
+     * 
+     * @return array<string>
+     */
+    public function getPreludeNames(): array
+    {
+        return $this->preludeNames;
+    }
+
+    /**
+     * Set the callable prelude names.
+     */
+    public function setPreludeNames(string ...$names): static
+    {
+        $this->preludeNames = $names;
+        return $this;
+    }
 
     /**
      * Validate and register the callable's parameter and return types.

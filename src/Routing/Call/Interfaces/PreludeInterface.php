@@ -26,23 +26,17 @@
  * @copyright © 2024 Laucov Serviços de Tecnologia da Informação Ltda.
  */
 
-namespace Laucov\Http\Routing;
+namespace Laucov\Http\Routing\Call\Interfaces;
+
+use Laucov\Http\Message\ResponseInterface;
 
 /**
- * Stores information about an HTTP route.
- * 
- * @deprecated 2.0.0 Use `\Laucov\Http\Routing\Call\Callback` instead.
+ * Runs procedures before the execution of a route.
  */
-class RouteClosure extends AbstractRouteCallable
+interface PreludeInterface
 {
     /**
-     * Create the route closure instance.
+     * Run the prelude procedures.
      */
-    public function __construct(\Closure $closure)
-    {
-        // Assign properties.
-        $reflection = new \ReflectionFunction($closure);
-        $this->validate($reflection);
-        $this->closure = $closure;
-    }
+    public function run(): null|string|\Stringable|ResponseInterface;
 }

@@ -26,7 +26,7 @@
  * @copyright © 2024 Laucov Serviços de Tecnologia da Informação Ltda.
  */
 
-namespace Laucov\Http\Routing;
+namespace Laucov\Http\Routing\Call;
 
 use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\ResponseInterface;
@@ -34,87 +34,80 @@ use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
 use Laucov\Http\Routing\Call\Interfaces\RouteInterface;
 
 /**
- * Stores information about an HTTP route.
- * 
- * @deprecated 2.0.0 Use `\Laucov\Http\Routing\Call\Route` instead.
+ * Stores information about a processed route callback.
  */
 class Route implements RouteInterface
 {
-    /**
-     * Route closure.
-     * 
-     * @deprecated 2.0.0 Use `$routeCallable` instead.
-     */
-    protected AbstractRouteCallable $routeClosure;
-
     /**
      * Create the route instance.
      */
     public function __construct(
         /**
-         * Route closure.
+         * Callback object.
          */
-        protected AbstractRouteCallable $routeCallable,
+        protected Callback $callback,
 
         /**
-         * Execution parameters.
+         * Callback parameters.
          */
         protected array $parameters,
 
         /**
-         * Prelude objects.
+         * Route preludes.
          * 
          * @var array<PreludeInterface>
          */
-        protected array $preludes = [],
+        protected array $preludes,
     ) {
-        $this->routeClosure = &$this->routeCallable;
     }
 
     /**
-     * Run the route's closure with the given arguments.
+     * Run the route procedures.
      */
     public function run(): ResponseInterface
     {
-        // Run prelude instances.
+        // Run preludes.
         foreach ($this->preludes as $prelude) {
-            $p_result = $prelude->run();
-            if ($p_result !== null) {
-                return $this->createResponse($p_result);
+            $prelude_result = $prelude->run();
+            if ($prelude_result !== null) {
+                return $prelude_result instanceof ResponseInterface
+                    ? $prelude_result
+                    : $this->createResponse($prelude_result);
             }
         }
 
-        // Get closure results.
-        $result = call_user_func_array(
-            $this->routeClosure->closure,
-            $this->parameters,
-        );
+        // Run callback.
+        $callback = $this->callback->callback;
+        if (is_callable($callback)) {
+            // Execute callable.
+            $result = $callback(...$this->parameters);
+        } else {
+            // Instantiate class and call method.
+            [$class_name, $method_name] = $callback;
+            $instance = new $class_name(...$this->callback->constructorArgs);
+            $result = $instance->{$method_name}(...$this->parameters);
+        }
 
-        // Get response.
-        $response = $this->createResponse($result);
-
-        return $response;
+        // Process result.
+        return $result instanceof ResponseInterface
+            ? $result
+            : $this->createResponse($result);
     }
 
     /**
-     * Transform unknown output into a `ResponseInterface` object.
+     * Handle unknown output and return it as a `ResponseInterface` object.
      */
-    protected function createResponse(
-        string|\Stringable|ResponseInterface $content,
-    ): ResponseInterface {
-        // Check content type.
-        if ($content instanceof ResponseInterface) {
-            // Return response.
-            return $content;
-        } elseif (is_string($content) || $content instanceof \Stringable) {
+    protected function createResponse(mixed $content): ResponseInterface
+    {
+        // Handle string or stringable object.
+        if (is_string($content) || $content instanceof \Stringable) {
             // Create response from string.
             $response = new OutgoingResponse();
             return $response->setBody((string) $content);
-        } else {
-            // @codeCoverageIgnoreStart
-            $message = 'Received an unexpected result from a route closure.';
-            throw new \RuntimeException($message);
-            // @codeCoverageIgnoreEnd
         }
+
+        // Fail if received other type of content.
+        $message = 'Received an unexpected result from a route closure.';
+        throw new \RuntimeException($message);
     }
 }
