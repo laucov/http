@@ -126,17 +126,6 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Get all header lines for a registered name.
-     * 
-     * @deprecated 2.0.0 Use `getHeaderLines()` instead.
-     * @codeCoverageIgnore
-     */
-    public function getHeaders(string $name): array
-    {
-        return $this->getHeaderLines($name);
-    }
-
-    /**
      * Get the HTTP protocol version.
      */
     public function getProtocolVersion(): null|string
