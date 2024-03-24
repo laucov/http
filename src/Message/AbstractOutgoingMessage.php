@@ -36,27 +36,56 @@ use Laucov\Files\Resource\StringSource;
 abstract class AbstractOutgoingMessage extends AbstractMessage
 {
     /**
-     * Add a message header.
+     * Treat a header as a comma-separated list and push a value to it.
      * 
-     * If the header exists, appends the value, otherwise creates it.
+     * Adds the value to the last registered line for the given header name.
+     * 
+     * If not registered, creates the header.
+     * 
+     * @deprecated 2.0.0 Use `addHeaderValue()` instead.
+     * @codeCoverageIgnore
      */
-    public function addHeader(
-        string $name,
-        string $value,
-        int $index = 0,
-    ): static {
-        $name = strtolower($name);
-        $list = $this->getHeaderAsList($name);
+    public function addHeader(string $name, string $value): static
+    {
+        return $this->addHeaderValue($name, $value);
+    }
 
-        if ($list === null) {
-            return $this->setHeader($name, $value);
+    /**
+     * Set a value as a new line for the given header name.
+     */
+    public function addHeaderLine(string $name, string $value): static
+    {
+        $name = strtolower($name);
+        $this->headers[$name][] = trim($value);
+        return $this;
+    }
+
+    /**
+     * Treat a header as a comma-separated list and push a value to it.
+     * 
+     * Adds the value to the last registered line for the given header name.
+     * 
+     * If not registered, creates the header.
+     */
+    public function addHeaderValue(string $name, string $value): static
+    {
+        // Add as a new header line if not set yet.
+        $name = strtolower($name);
+        if (!array_key_exists($name, $this->headers)) {
+            return $this->setHeaderLine($name, $value);
         }
 
-        $list[] = trim($value);
-        $this->headers[$name][$index] = implode(', ', $list);
+        // Get line values.
+        $line = array_pop($this->headers[$name]);
+        $values = array_map('trim', explode(',', $line));
+
+        // Add new value and set line.
+        $values[] = trim($value);
+        $this->headers[$name][] = implode(', ', $values);
 
         return $this;
     }
+
     /**
      * Set the message body.
      * 
@@ -69,24 +98,23 @@ abstract class AbstractOutgoingMessage extends AbstractMessage
     }
 
     /**
-     * Set a message header.
+     * Set a value as the only line for the given header name.
+     * 
+     * @deprecated 2.0.0 Use `setHeaderLine()` instead.
+     * @codeCoverageIgnore
      */
-    public function setHeader(
-        string $name,
-        string $value,
-        bool $replace = true,
-    ): static {
-        // Format name and value.
+    public function setHeader(string $name, string $value): static
+    {
+        return $this->setHeaderLine($name, $value);
+    }
+
+    /**
+     * Set a value as the only line for the given header name.
+     */
+    public function setHeaderLine(string $name, string $value): static
+    {
         $name = strtolower($name);
-        $value = trim($value);
-
-        // Add or replace header.
-        if ($replace) {
-            $this->headers[$name] = [$value];
-        } else {
-            $this->headers[$name][] = $value;
-        }
-
+        $this->headers[$name] = [trim($value)];
         return $this;
     }
 

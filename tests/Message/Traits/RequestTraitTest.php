@@ -43,16 +43,12 @@ class RequestTraitTest extends TestCase
      */
     protected object $request;
 
-    protected function setUp(): void
-    {
-        $this->request = $this->getMockForTrait(RequestTrait::class);
-    }
-
     /**
      * @covers ::getMethod
      */
     public function testCanGetMethod(): void
     {
+        // Test default method value.
         $this->assertSame('GET', $this->request->getMethod());
     }
 
@@ -63,5 +59,10 @@ class RequestTraitTest extends TestCase
     {
         $this->expectException(\RuntimeException::class);
         $this->request->getUri();
+    }
+
+    protected function setUp(): void
+    {
+        $this->request = $this->getMockForTrait(RequestTrait::class);
     }
 }

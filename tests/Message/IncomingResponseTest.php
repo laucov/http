@@ -41,42 +41,6 @@ class IncomingResponseTest extends TestCase
 {
     /**
      * @covers ::__construct
-     * @uses Laucov\Files\Resource\StringSource::__construct
-     * @uses Laucov\Files\Resource\StringSource::read
-     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
-     * @uses Laucov\Http\Cookie\ResponseCookie::__construct
-     * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
-     * @uses Laucov\Http\Message\AbstractMessage::getBody
-     * @uses Laucov\Http\Message\AbstractMessage::getHeader
-     * @uses Laucov\Http\Message\Traits\ResponseTrait::getCookie
-     * @uses Laucov\Http\Message\Traits\ResponseTrait::getStatusCode
-     * @uses Laucov\Http\Message\Traits\ResponseTrait::getStatusText
-     */
-    public function testCanInstantiate(): void
-    {
-        $cookie_a = new ResponseCookie('cookie-1', 'Cookie 1 text');
-        $cookie_b = new ResponseCookie('cookie-2', 'Cookie 2 text');
-        $response = new IncomingResponse(
-            content: 'Some message.',
-            headers: [
-                'Authorization' => 'Basic user:password',
-            ],
-            protocol_version: null,
-            status_code: 401,
-            status_text: 'Unauthorized',
-            cookies: [$cookie_a, $cookie_b],
-        );
-        $this->assertSame('Some message.', $response->getBody()->read(13));
-        $this->assertSame(401, $response->getStatusCode());
-        $this->assertSame('Unauthorized', $response->getStatusText());
-        $header = $response->getHeader('Authorization');
-        $this->assertSame('Basic user:password', $header);
-        $this->assertSame($cookie_a, $response->getCookie('cookie-1'));
-        $this->assertSame($cookie_b, $response->getCookie('cookie-2'));
-    }
-
-    /**
-     * @covers ::__construct
      * @uses Laucov\Http\Cookie\AbstractCookie::__construct
      * @uses Laucov\Http\Cookie\ResponseCookie::__construct
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
@@ -92,5 +56,58 @@ class IncomingResponseTest extends TestCase
             new ResponseCookie('cookie-a', 'A'),
             new \stdClass(),
         ]);
+    }
+
+    /**
+     * @covers ::__construct
+     * @uses Laucov\Files\Resource\StringSource::__construct
+     * @uses Laucov\Files\Resource\StringSource::read
+     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
+     * @uses Laucov\Http\Cookie\ResponseCookie::__construct
+     * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
+     * @uses Laucov\Http\Message\AbstractMessage::getBody
+     * @uses Laucov\Http\Message\AbstractMessage::getHeaderLine
+     * @uses Laucov\Http\Message\AbstractMessage::getProtocolVersion
+     * @uses Laucov\Http\Message\Traits\ResponseTrait::getCookie
+     * @uses Laucov\Http\Message\Traits\ResponseTrait::getStatusCode
+     * @uses Laucov\Http\Message\Traits\ResponseTrait::getStatusText
+     */
+    public function testSetsPropertiesFromConstructor(): void
+    {
+        // Create cookies.
+        $cookies = [
+            new ResponseCookie('cookie-1', 'Cookie 1 text'),
+            new ResponseCookie('cookie-2', 'Cookie 2 text'),
+        ];
+
+        // Create response.
+        $response = new IncomingResponse(
+            content: 'Some message.',
+            headers: [
+                'Authorization' => 'Basic user:password',
+            ],
+            protocol_version: '1.1',
+            status_code: 401,
+            status_text: 'Unauthorized',
+            cookies: [$cookies[0], $cookies[1]],
+        );
+
+        // Test body.
+        $this->assertSame('Some message.', (string) $response->getBody());
+
+        // Test protocol version.
+        $this->assertSame('1.1', $response->getProtocolVersion());
+
+        // Test headers.
+        $header = $response->getHeaderLine('Authorization');
+        $this->assertSame('Basic user:password', $header);
+
+        // Test status.
+        $this->assertSame(401, $response->getStatusCode());
+        $this->assertSame('Unauthorized', $response->getStatusText());
+
+        // Test cookies.
+        $this->assertSame($cookies[0], $response->getCookie('cookie-1'));
+        $this->assertSame($cookies[1], $response->getCookie('cookie-2'));
     }
 }

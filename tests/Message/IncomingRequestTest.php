@@ -30,6 +30,8 @@ declare(strict_types=1);
 
 namespace Tests\Message;
 
+use Laucov\Arrays\ArrayReader;
+use Laucov\Files\Resource\Uri;
 use Laucov\Http\Cookie\RequestCookie;
 use Laucov\Http\Message\IncomingRequest;
 use PHPUnit\Framework\TestCase;
@@ -54,42 +56,60 @@ class IncomingRequestTest extends TestCase
      * @uses Laucov\Files\Resource\Uri::__construct
      * @uses Laucov\Files\Resource\Uri::fromString
      */
-    public function testCanInstantiateWithPostVariablesArray(): void
+    public function testCanInstantiateWithPostOrTextOrResource(): void
     {
-        $request = $this->getInstance([
-            'name' => 'John',
-            'age' => '32',
-            'fruits' => ['apple', 'tomato'],
-        ]);
+        // Instantiante with POST variables.
+        $request = new IncomingRequest(
+            content_or_post: [
+                'name' => 'John',
+                'age' => '32',
+                'fruits' => ['apple', 'tomato'],
+            ],
+        );
 
-        $this->assertSame('', $request->getBody()->read(10));
+        // Check that there is no body.
+        $this->assertSame('', (string) $request->getBody());
+        // Get variable.
+        $post = $request->getPostVariables();
+        $this->assertSame('John', $post->getValue('name'));
+        $this->assertSame('32', $post->getValue('age'));
+        $this->assertSame('apple', $post->getValue(['fruits', 0]));
+        $this->assertSame('tomato', $post->getValue(['fruits', 1]));
 
-        $fruit = $request->getPostVariables()->getValue(['fruits', 1]);
-        $this->assertSame('tomato', $fruit);
+        // Instantiate with text content.
+        $request = new IncomingRequest('Text content.');
+        $this->assertSame('Text content.', (string) $request->getBody());
+
+        // Instantiate with file content.
+        $file = fopen('data://text/plain,File content.', 'r');
+        $request = new IncomingRequest($file);
+        $this->assertSame('File content.', (string) $request->getBody());
     }
 
     /**
      * @covers ::__construct
-     * @uses Laucov\Arrays\ArrayReader::__construct
-     * @uses Laucov\Files\Resource\StringSource::__construct
-     * @uses Laucov\Files\Resource\StringSource::read
-     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
-     * @uses Laucov\Http\Message\AbstractMessage::getBody
-     * @uses Laucov\Http\Message\IncomingRequest::__construct
-     * @uses Laucov\Files\Resource\Uri::__construct
-     * @uses Laucov\Files\Resource\Uri::fromString
+     * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
      */
-    public function testCanInstantiateWithTextAndFile(): void
+    public function testCanInstantiateWithTextUriOrUriObject(): void
     {
-        $text_request = $this->getInstance('Text content.');
-        $text = $text_request->getBody()->read(13);
-        $this->assertSame('Text content.', $text);
+        // Create URI options.
+        $text = 'http://foobar.com/a/b/c';
+        $object = new Uri('http', host: 'foobar.com', path: 'a/b/c');
 
-        $file = fopen('data://text/plain,File content.', 'r');
-        $file_request = $this->getInstance($file);
-        $text = $file_request->getBody()->read(13);
-        $this->assertSame('File content.', $text);
+        // Create requests.
+        $requests = [
+            new IncomingRequest('', uri: $text),
+            new IncomingRequest('', uri: $object),
+        ];
+
+        // Test instances.
+        foreach ($requests as $request) {
+            $uri = $request->getUri();
+            $this->assertSame('http', $uri->scheme);
+            $this->assertSame('foobar.com', $uri->host);
+            $this->assertSame('a/b/c', $uri->path);
+        }
     }
 
     /**
@@ -100,7 +120,7 @@ class IncomingRequestTest extends TestCase
      * @uses Laucov\Files\Resource\StringSource::__construct
      * @uses Laucov\Http\Cookie\AbstractCookie::__construct
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
-     * @uses Laucov\Http\Message\AbstractMessage::getHeader
+     * @uses Laucov\Http\Message\AbstractMessage::getHeaderLine
      * @uses Laucov\Http\Message\AbstractMessage::getProtocolVersion
      * @uses Laucov\Http\Message\IncomingRequest::__construct
      * @uses Laucov\Http\Message\Traits\RequestTrait::getCookie
@@ -109,30 +129,57 @@ class IncomingRequestTest extends TestCase
      * @uses Laucov\Files\Resource\Uri::__construct
      * @uses Laucov\Files\Resource\Uri::fromString
      */
-    public function testConstructorSavesInformation(): void
+    public function testSetsPropertiesFromConstructor(): void
     {
-        $request = $this->getInstance('Any content.');
+        // Create request.
+        $request = new IncomingRequest(
+            content_or_post: '',
+            headers: [
+                'Content-Type' => 'application/json',
+            ],
+            protocol_version: '1.0',
+            method: 'POST',
+            uri: 'http://foobar.com/path/to/somewhere',
+            parameters: [
+                'search' => 'foobar',
+                'page' => '2',
+            ],
+            cookies: [
+                'dark-mode' => 'false',
+                'name' => 'John',
+            ],
+        );
 
+        // Test headers.
+        $this->assertSame(
+            'application/json',
+            $request->getHeaderLine('Content-Type'),
+        );
+
+        // Test protocol version.
         $protocol_version = $request->getProtocolVersion();
         $this->assertSame('1.0', $protocol_version);
 
+        // Test method.
         $method = $request->getMethod();
         $this->assertSame('POST', $method);
 
+        // Test URI.
         $uri = $request->getUri();
         $this->assertSame('http', $uri->scheme);
         $this->assertSame('foobar.com', $uri->host);
+        $this->assertSame('path/to/somewhere', $uri->path);
 
-        $parameter = $request->getParameters()->getValue('search');
-        $this->assertSame('foobar', $parameter);
+        // Test parameters.
+        $parameters = $request->getParameters();
+        $this->assertSame('foobar', $parameters->getValue('search'));
+        $this->assertSame('2', $parameters->getValue('page'));
 
-        $header = $request->getHeader('Authorization');
-        $this->assertSame('Basic john.doe:1234', $header);
-
-        $cookie = $request->getCookie('foobar');
+        // Test cookies.
+        $cookie = $request->getCookie('dark-mode');
         $this->assertInstanceOf(RequestCookie::class, $cookie);
-        $this->assertSame('foobar', $cookie->name);
-        $this->assertSame('baz', $cookie->value);
+        $this->assertSame('dark-mode', $cookie->name);
+        $this->assertSame('false', $cookie->value);
     }
 
 
@@ -150,38 +197,5 @@ class IncomingRequestTest extends TestCase
         new IncomingRequest([], [], null, 'GET', '', [], [
             'cookie-a' => new \stdClass(),
         ]);
-    }
-
-    /**
-     * Get a request pre-configured instance.
-     */
-    public function getInstance(mixed $content): IncomingRequest
-    {
-        // Create headers.
-        $headers = [
-            'Authorization' => 'Basic john.doe:1234',
-        ];
-
-        // Create parameters.
-        $parameters = [
-            'page' => '2',
-            'search' => 'foobar',
-        ];
-
-        // Create cookies.
-        $cookies = [
-            'foobar' => 'baz',
-        ];
-
-        // Create request.
-        return new IncomingRequest(
-            content_or_post: $content,
-            headers: $headers,
-            protocol_version: '1.0',
-            method: 'POST',
-            uri: 'http://foobar.com/hello-world',
-            parameters: $parameters,
-            cookies: $cookies,
-        );
     }
 }

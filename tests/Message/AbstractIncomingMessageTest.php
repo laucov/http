@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace Tests\Message;
 
+use Laucov\Files\Resource\StringSource;
 use Laucov\Http\Message\AbstractIncomingMessage;
 use PHPUnit\Framework\TestCase;
 
@@ -38,19 +39,25 @@ use PHPUnit\Framework\TestCase;
  */
 class AbstractIncomingMessageTest extends TestCase
 {
+    /**
+     * Provide a list of invalid header sets.
+     */
     public function invalidHeaderProvider(): array
     {
         return [
+            // Invalid "Content-Lenght" with non-string value.
             [[
                 'Cache-Control' => 'must-understand, no-store',
                 'X-Foobar' => ['foo', 'bar'],
                 'Content-Length' => 44,
             ]],
+            // Invalid "X-Foobar" with non-string list value.
             [[
                 'Cache-Control' => 'must-understand, no-store',
                 'Content-Length' => '44',
                 'X-Foobar' => ['foo', ['bar']],
             ]],
+            // Invalid "3" with integer key.
             [[
                 'Cache-Control' => 'must-understand, no-store',
                 'Content-Length' => '44',
@@ -62,47 +69,158 @@ class AbstractIncomingMessageTest extends TestCase
 
     /**
      * @covers ::__construct
+     * @covers ::getBody
+     * @covers ::getHeaderAsList
+     * @covers ::getHeaderLine
+     * @covers ::getHeaderLines
+     * @covers ::getHeaderNames
+     * @covers ::getProtocolVersion
      * @uses Laucov\Files\Resource\StringSource::__construct
      * @uses Laucov\Files\Resource\StringSource::read
-     * @uses Laucov\Http\Message\AbstractMessage::getBody
-     * @uses Laucov\Http\Message\AbstractMessage::getHeader
-     * @uses Laucov\Http\Message\AbstractMessage::getHeaderAsList
-     * @uses Laucov\Http\Message\AbstractMessage::getHeaderNames
      */
     public function testCanInstantiate(): void
     {
-        // Create instance.
-        $message = $this->getInstance([
+        // Set arguments.
+        $arguments = [
             'content' => 'The quick brown fox jumps over the lazy dog.',
             'headers' => [
-                'Cache-Control' => 'must-understand, no-store',
+                // Set single line header.
                 'Content-Length' => '44',
-                'Set-Cookie' => ['foo=a', 'bar=b'],
+                // Set multi-line header.
+                'SET-COOKIE' => [
+                    'foo=a; Secure',
+                    'bar=b',
+                ],
+                // Set a single line value list.
+                'AcCePt-LaNgUaGe' => 'fr-CH, fr;q=0.9, en;q=0.8',
+                // Set a multi-line value list.
+                'cache-control' => [
+                    'no-cache, no-store',
+                    'must-revalidate',
+                ],
             ],
-            'protocol_version' => null,
-        ]);
+            'protocol_version' => '1.1',
+        ];
 
-        // Check body.
+        // Create instance.
+        $message = $this->getMockForAbstractClass(
+            AbstractIncomingMessage::class,
+            $arguments,
+        );
+
+        // Get body content.
         /** @var \Laucov\Files\Resource\StringSource */
         $body = $message->getBody();
-        $this->assertNotNull($body);
+        $this->assertInstanceOf(StringSource::class, $body);
+
+        // Test body reading.
         $this->assertSame('The quick', $body->read(9));
+        $this->assertSame(' brown fox jumps over ', $body->read(22));
+        $this->assertSame('the lazy dog.', $body->read(13));
+        $this->assertSame('', $body->read(10));
 
-        // Check headers.
-        $this->assertSame('44', $message->getHeader('Content-Length'));
-        $list = $message->getHeaderAsList('Cache-Control');
-        $this->assertCount(2, $list);
-        $this->assertContains('must-understand', $list);
-        $this->assertContains('no-store', $list);
+        // Test stringifying the body.
+        $this->assertSame(
+            'The quick brown fox jumps over the lazy dog.',
+            (string) $body,
+        );
 
-        // Check header names.
-        $header_names = $message->getHeaderNames();
-        $this->assertIsArray($header_names);
-        $this->assertCount(3, $header_names);
-        $this->assertSame('Cache-Control', $header_names[0]);
-        $this->assertSame('Content-Length', $header_names[1]);
-        $this->assertSame('Set-Cookie', $header_names[2]);
+        // Test getting single lines.
+        // Authorization - not set
+        $this->assertNull($message->getHeaderLine('Authorization'));
+        // Content-Length
+        $this->assertSame('44', $message->getHeaderLine('Content-Length'));
+        // Set-Cookie
+        $this->assertSame(
+            'foo=a; Secure',
+            $message->getHeaderLine('Set-Cookie'),
+        );
+        // Accept-Language
+        $this->assertSame(
+            'fr-CH, fr;q=0.9, en;q=0.8',
+            $message->getHeaderLine('Accept-Language'),
+        );
+        // Cache-Control
+        $this->assertSame(
+            'no-cache, no-store',
+            $message->getHeaderLine('Cache-Control'),
+        );
+
+        // Test getting multiple lines.
+        // Authorization - not set
+        $lines = $message->getHeaderLines('Authorization');
+        $this->assertIsArray($lines);
+        $this->assertCount(0, $lines);
+        // Content-Length
+        $lines = $message->getHeaderLines('Content-Length');
+        $this->assertIsArray($lines);
+        $this->assertCount(1, $lines);
+        $this->assertSame('44', $lines[0]);
+        // Set-Cookie
+        $lines = $message->getHeaderLines('Set-Cookie');
+        $this->assertIsArray($lines);
+        $this->assertCount(2, $lines);
+        $this->assertSame('foo=a; Secure', $lines[0]);
+        $this->assertSame('bar=b', $lines[1]);
+        // Accept-Language
+        $lines = $message->getHeaderLines('Accept-Language');
+        $this->assertIsArray($lines);
+        $this->assertCount(1, $lines);
+        $this->assertSame('fr-CH, fr;q=0.9, en;q=0.8', $lines[0]);
+        // Cache-Control
+        $lines = $message->getHeaderLines('Cache-Control');
+        $this->assertIsArray($lines);
+        $this->assertCount(2, $lines);
+        $this->assertSame('no-cache, no-store', $lines[0]);
+        $this->assertSame('must-revalidate', $lines[1]);
+
+        // Test getting value list.
+        // Authorization - not set
+        $values = $message->getHeaderAsList('Authorization');
+        $this->assertIsArray($values);
+        $this->assertCount(0, $values);
+        // Content-Length
+        $values = $message->getHeaderAsList('Content-Length');
+        $this->assertIsArray($values);
+        $this->assertCount(1, $values);
+        $this->assertSame('44', $values[0]);
+        // Set-Cookie
+        $values = $message->getHeaderAsList('Set-Cookie');
+        $this->assertIsArray($values);
+        $this->assertCount(2, $values);
+        $this->assertSame('foo=a; Secure', $values[0]);
+        $this->assertSame('bar=b', $values[1]);
+        // Accept-Language
+        $values = $message->getHeaderAsList('Accept-Language');
+        $this->assertIsArray($values);
+        $this->assertCount(3, $values);
+        $this->assertSame('fr-CH', $values[0]);
+        $this->assertSame('fr;q=0.9', $values[1]);
+        $this->assertSame('en;q=0.8', $values[2]);
+        // Cache-Control
+        $values = $message->getHeaderAsList('Cache-Control');
+        $this->assertCount(3, $values);
+        $this->assertSame('no-cache', $values[0]);
+        $this->assertSame('no-store', $values[1]);
+        $this->assertSame('must-revalidate', $values[2]);
+
+        // Test getting header names.
+        $names = $message->getHeaderNames();
+        $this->assertIsArray($names);
+        $this->assertCount(4, $names);
+        $this->assertSame('Content-Length', $names[0]);
+        $this->assertSame('Set-Cookie', $names[1]);
+        $this->assertSame('Accept-Language', $names[2]);
+        $this->assertSame('Cache-Control', $names[3]);
+
+        // Test getting protocol version.
+        $this->assertSame('1.1', $message->getProtocolVersion());
     }
+
+    // @todo Test case sensitivity
+    // public function testIsCaseInsensitive(): void
+    // {
+    // }
 
     /**
      * @covers ::__construct
@@ -112,19 +230,10 @@ class AbstractIncomingMessageTest extends TestCase
     public function testMustPassValidHeaders(array $headers): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->getInstance([
-            'content' => '',
+        $this->getMockForAbstractClass(AbstractIncomingMessage::class, [
+            'content' => 'Some useless content.',
             'headers' => $headers,
             'protocol_version' => null,
         ]);
-    }
-
-    /**
-     * Get a mock for `AbstractIncomingMessage`.
-     */
-    protected function getInstance(array $arguments): AbstractIncomingMessage
-    {
-        $class_name = AbstractIncomingMessage::class;
-        return $this->getMockForAbstractClass($class_name, $arguments);
     }
 }

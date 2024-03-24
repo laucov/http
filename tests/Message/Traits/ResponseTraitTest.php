@@ -44,9 +44,14 @@ class ResponseTraitTest extends TestCase
      */
     public function testCanGetStatus(): void
     {
+        // Create response.
         /** @var ResponseTrait */
         $response = $this->getMockForTrait(ResponseTrait::class);
+
+        // Test default status code.
         $this->assertSame(200, $response->getStatusCode());
+
+        // Test default status text.
         $this->assertSame('OK', $response->getStatusText());
     }
 }

@@ -61,32 +61,52 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Get a header value.
+     * Get the first line for a header name.
+     * 
+     * @deprecated 2.0.0 Use `getHeaderLine()` instead.
+     * @codeCoverageIgnore
      */
-    public function getHeader(string $name, int $index = 0): null|string
+    public function getHeader(string $name): null|string
     {
-        $name = strtolower($name);
-        return isset($this->headers[$name][$index])
-            ? $this->headers[$name][$index]
-            : null;
+        return $this->getHeaderLine($name);
     }
 
     /**
-     * Get a header value splitted as a list.
+     * Get values for a header name as a list.
      * 
      * @return string[]
      */
-    public function getHeaderAsList(string $name, int $index = 0): null|array
+    public function getHeaderAsList(string $name): array
     {
-        // Get header text.
-        $header = $this->getHeader($name, $index);
-        if ($header === null) {
-            return null;
+        // Get lines.
+        $lines = $this->getHeaderLines($name);
+        if (count($lines) < 1) {
+            return $lines;
         }
 
-        // Split and trim.
-        $values = explode(',', $header);
-        return array_map('trim', $values);
+        // Get and trim individual list values.
+        $values = array_map(fn ($l) => explode(',', $l), $lines);
+        $values = array_map('trim', array_merge(...$values));
+
+        return $values;
+    }
+
+    /**
+     * Get the first line for a header name.
+     */
+    public function getHeaderLine(string $name): null|string
+    {
+        $name = strtolower($name);
+        return $this->headers[$name][0] ?? null;
+    }
+
+    /**
+     * Get all lines for a header name.
+     */
+    public function getHeaderLines(string $name): array
+    {
+        $name = strtolower($name);
+        return $this->headers[$name] ?? [];
     }
 
     /**
@@ -97,7 +117,7 @@ abstract class AbstractMessage implements MessageInterface
         // Get names.
         $names = array_keys($this->headers);
 
-        // Beautify.
+        // Beautify names.
         foreach ($names as &$name) {
             $name = implode('-', (array_map('ucfirst', explode('-', $name))));
         }
@@ -106,14 +126,14 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Get all header values for a given name.
+     * Get all header lines for a registered name.
+     * 
+     * @deprecated 2.0.0 Use `getHeaderLines()` instead.
+     * @codeCoverageIgnore
      */
     public function getHeaders(string $name): array
     {
-        $name = strtolower($name);
-        return isset($this->headers[$name])
-            ? $this->headers[$name]
-            : null;
+        return $this->getHeaderLines($name);
     }
 
     /**

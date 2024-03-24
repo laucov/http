@@ -48,23 +48,81 @@ class AbstractOutgoingMessageTest extends TestCase
     }
 
     /**
-     * @covers ::addHeader
-     * @covers ::getHeader
+     * @covers ::addHeaderLine
+     * @covers ::addHeaderValue
      * @covers ::getHeaderAsList
-     * @uses Laucov\Http\Message\AbstractOutgoingMessage::setHeader
+     * @covers ::getHeaderLine
+     * @covers ::getHeaderLines
+     * @covers ::setHeaderLine
      */
-    public function testCanAddHeaders(): void
+    public function testCanAddAndSetHeaders(): void
     {
-        $this->message->addHeader('Cache-Control', 'must-understand');
-        $this->message->addHeader('Cache-Control', 'no-store');
+        // Add values.
+        $this->message->addHeaderValue('Accept-Language', 'pt-BR');
+        $this->message->addHeaderValue('Accept-Language', 'pt;q=0.9');
 
-        $line = $this->message->getHeader('Cache-Control');
-        $this->assertSame('must-understand, no-store', $line);
+        // Add new line.
+        $this->message->addHeaderLine('Accept-Language', 'es;q=0.8, en;q=0.7');
 
-        $list = $this->message->getHeaderAsList('Cache-Control');
-        $this->assertCount(2, $list);
-        $this->assertContains('must-understand', $list);
-        $this->assertContains('no-store', $list);
+        // Add value to new line.
+        $this->message->addHeaderValue('Accept-Language', 'fr;q=0.6');
+
+        // Test getting single line.
+        $this->assertSame(
+            'pt-BR, pt;q=0.9',
+            $this->message->getHeaderLine('Accept-Language'),
+        );
+
+        // Test getting all lines.
+        $lines = $this->message->getHeaderLines('Accept-Language');
+        $this->assertIsArray($lines);
+        $this->assertCount(2, $lines);
+        $this->assertSame('pt-BR, pt;q=0.9', $lines[0]);
+        $this->assertSame('es;q=0.8, en;q=0.7, fr;q=0.6', $lines[1]);
+
+        // Test getting values.
+        $values = $this->message->getHeaderAsList('Accept-Language');
+        $this->assertIsArray($values);
+        $this->assertCount(5, $values);
+        $this->assertSame('pt-BR', $values[0]);
+        $this->assertSame('pt;q=0.9', $values[1]);
+        $this->assertSame('es;q=0.8', $values[2]);
+        $this->assertSame('en;q=0.7', $values[3]);
+        $this->assertSame('fr;q=0.6', $values[4]);
+
+        // Set line for unset header.
+        $this->message->setHeaderLine('Authorization', 'Basic john:1234');
+        // Set line for existing header - overwrite all set lines.
+        $this->message->setHeaderLine('Accept-Language', 'en-US, en');
+
+        // Test new values.
+        // Authorization
+        $this->assertSame(
+            'Basic john:1234',
+            $this->message->getHeaderLine('Authorization'),
+        );
+        $lines = $this->message->getHeaderLines('Authorization');
+        $this->assertIsArray($lines);
+        $this->assertCount(1, $lines);
+        $this->assertSame('Basic john:1234', $lines[0]);
+        $values = $this->message->getHeaderAsList('Authorization');
+        $this->assertIsArray($values);
+        $this->assertCount(1, $values);
+        $this->assertSame('Basic john:1234', $values[0]);
+        // Accept-Language
+        $this->assertSame(
+            'en-US, en',
+            $this->message->getHeaderLine('Accept-Language'),
+        );
+        $lines = $this->message->getHeaderLines('Accept-Language');
+        $this->assertIsArray($lines);
+        $this->assertCount(1, $lines);
+        $this->assertSame('en-US, en', $lines[0]);
+        $values = $this->message->getHeaderAsList('Accept-Language');
+        $this->assertIsArray($values);
+        $this->assertCount(2, $values);
+        $this->assertSame('en-US', $values[0]);
+        $this->assertSame('en', $values[1]);
     }
 
     /**
@@ -75,57 +133,30 @@ class AbstractOutgoingMessageTest extends TestCase
      */
     public function testCanSetBody(): void
     {
+        // Set the body.
         $this->message->setBody('Lorem ipsum');
+
+        // Get the body.
         /** @var StringSource */
         $body = $this->message->getBody();
         $this->assertInstanceOf(StringSource::class, $body);
-        $this->assertSame('Lorem ipsum', $body->read(11));
+
+        // Test body reading.
+        $this->assertSame('Lorem', $body->read(5));
+        $this->assertSame(' ipsum', $body->read(6));
+        $this->assertSame('', $body->read(2));
+
+        // Test stringifying the body.
+        $this->assertSame('Lorem ipsum', (string) $body);
     }
 
     /**
-     * @covers ::getHeaderNames
-     * @covers ::getHeaders
-     * @covers ::setHeader
-     * @uses Laucov\Http\Message\AbstractMessage::getHeader
-     */
-    public function testCanSetHeader(): void
-    {
-        $this->message->setHeader('Content-Length', '10');
-        $this->assertSame('10', $this->message->getHeader('Content-Length'));
-        $this->assertSame('10', $this->message->getHeader('CONTENT-Length'));
-        $this->assertSame('10', $this->message->getHeader('content-length'));
-
-        $this->message->setHeader('Set-Cookie', 'foo=bar; Secure');
-        $this->message->setHeader('Set-Cookie', 'foobar=baz', false);
-        $this->assertSame(
-            'foo=bar; Secure',
-            $this->message->getHeader('set-cookie', 0),
-        );
-        $this->assertSame(
-            'foobar=baz',
-            $this->message->getHeader('set-cookie', 1),
-        );
-        $cookies = $this->message->getHeaders('Set-Cookie');
-        $this->assertIsArray($cookies);
-        $this->assertCount(2, $cookies);
-        $this->assertSame('foo=bar; Secure', $cookies[0]);
-        $this->assertSame('foobar=baz', $cookies[1]);
-
-        $this->message->setHeader('Content-Type', 'application/json');
-        $header_names = $this->message->getHeaderNames();
-        $this->assertIsArray($header_names);
-        $this->assertCount(3, $header_names);
-        $this->assertSame('Content-Length', $header_names[0]);
-        $this->assertSame('Set-Cookie', $header_names[1]);
-        $this->assertSame('Content-Type', $header_names[2]);
-    }
-
-    /**
+     * @covers ::getProtocolVersion
      * @covers ::setProtocolVersion
-     * @uses Laucov\Http\Message\AbstractMessage::getProtocolVersion
      */
     public function testCanSetProtocolVersion(): void
     {
+        $this->assertNull($this->message->getProtocolVersion());
         $this->message->setProtocolVersion('1.1');
         $this->assertSame('1.1', $this->message->getProtocolVersion());
 
@@ -134,25 +165,30 @@ class AbstractOutgoingMessageTest extends TestCase
     }
 
     /**
-     * @covers ::addHeader
-     * @covers ::setHeader
-     * @uses Laucov\Http\Message\AbstractMessage::getHeader
-     * @uses Laucov\Http\Message\AbstractMessage::getHeaderAsList
+     * @coversNothing
      */
-    public function testFiltersValues(): void
+    public function testTrimsValues(): void
     {
-        $this->message->setHeader('Content-Length', " 20 \n\n   \t");
-        $this->assertSame('20', $this->message->getHeader('Content-Length'));
+        // Test ::setHeaderLine trimming.
+        $this->message->setHeaderLine('Content-Length', " 20 \n\n   \t");
+        $this->assertSame(
+            '20',
+            $this->message->getHeaderLine('Content-Length'),
+        );
 
-        $this->message->addHeader('Cache-CONTROL', "\n\n\n\r must-understand");
-        $this->message->addHeader('CACHE-Control', "   no-store ");
+        // Test ::addHeaderLine trimming.
+        $this->message->addHeaderLine('Set-Cookie', "\nfoo=bar ");
+        $this->assertSame(
+            'foo=bar',
+            $this->message->getHeaderLine('Set-Cookie'),
+        );
 
-        $line = $this->message->getHeader('Cache-Control');
-        $this->assertSame('must-understand, no-store', $line);
-
-        $list = $this->message->getHeaderAsList('cAcHe-CoNtRoL');
-        $this->assertCount(2, $list);
-        $this->assertContains('must-understand', $list);
-        $this->assertContains('no-store', $list);
+        // Test ::addHeaderValue trimming.
+        $this->message->addHeaderValue('Cache-Control', "\n\n\n\r no-cache");
+        $this->message->addHeaderValue('Cache-Control', "   no-store ");
+        $this->assertSame(
+            'no-cache, no-store',
+            $this->message->getHeaderLine('Cache-Control'),
+        );
     }
 }
