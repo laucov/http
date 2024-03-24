@@ -43,6 +43,13 @@ interface RequestInterface extends MessageInterface
     public function getCookie(string $name): null|RequestCookie;
 
     /**
+     * Get all registered cookie names.
+     * 
+     * @return string[]
+     */
+    public function getCookieNames(): array;
+
+    /**
      * Get the request method.
      */
     public function getMethod(): string;

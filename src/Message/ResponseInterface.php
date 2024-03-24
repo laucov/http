@@ -41,6 +41,13 @@ interface ResponseInterface extends MessageInterface
     public function getCookie(string $name): null|ResponseCookie;
 
     /**
+     * Get all registered cookie names.
+     * 
+     * @return string[]
+     */
+    public function getCookieNames(): array;
+
+    /**
      * Get the response status code.
      */
     public function getStatusCode(): int;
