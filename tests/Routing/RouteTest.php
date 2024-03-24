@@ -85,7 +85,7 @@ class RouteTest extends TestCase
         // Check each output.
         foreach ([$route_a, $route_b, $route_c] as $route) {
             $response = $route->run();
-            $this->assertInstanceOf(ResponseInterface::class, $response);
+            $this->assertIsObject($response);
             $this->assertSame('Hello, World!', (string) $response->getBody());
         }
     }

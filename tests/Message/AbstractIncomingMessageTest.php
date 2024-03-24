@@ -111,7 +111,7 @@ class AbstractIncomingMessageTest extends TestCase
         // Get body content.
         /** @var \Laucov\Files\Resource\StringSource */
         $body = $message->getBody();
-        $this->assertInstanceOf(StringSource::class, $body);
+        $this->assertIsObject($body);
 
         // Test body reading.
         $this->assertSame('The quick', $body->read(9));

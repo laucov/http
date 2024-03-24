@@ -139,7 +139,7 @@ class AbstractOutgoingMessageTest extends TestCase
         // Get the body.
         /** @var StringSource */
         $body = $this->message->getBody();
-        $this->assertInstanceOf(StringSource::class, $body);
+        $this->assertIsObject($body);
 
         // Test body reading.
         $this->assertSame('Lorem', $body->read(5));

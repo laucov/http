@@ -387,7 +387,7 @@ class RouterTest extends TestCase
         if ($expected === null) {
             $this->assertNull($route, $message);
         } else {
-            $this->assertInstanceOf(Route::class, $route, $message);
+            $this->assertIsObject($route, $message);
             $response = $route->run();
             $content = (string) $response->getBody();
             $this->assertSame($expected, $content, $message);

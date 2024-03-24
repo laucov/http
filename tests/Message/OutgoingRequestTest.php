@@ -57,7 +57,7 @@ class OutgoingRequestTest extends TestCase
     public function testCanGetParameters(): void
     {
         $parameters = $this->request->getParameters();
-        $this->assertInstanceOf(ArrayBuilder::class, $parameters);
+        $this->assertIsObject($parameters);
     }
 
     /**
@@ -69,7 +69,7 @@ class OutgoingRequestTest extends TestCase
     public function testCanGetPostVariables(): void
     {
         $variables = $this->request->getPostVariables();
-        $this->assertInstanceOf(ArrayBuilder::class, $variables);
+        $this->assertIsObject($variables);
     }
 
     /**

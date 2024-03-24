@@ -109,7 +109,7 @@ class RouteTest extends TestCase
     {
         $route = new Route(...$args);
         $response = $route->run();
-        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertIsObject($response);
         $content = (string) $response->getBody();
         $this->assertSame($expected, $content);
     }

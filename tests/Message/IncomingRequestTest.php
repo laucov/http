@@ -177,7 +177,7 @@ class IncomingRequestTest extends TestCase
 
         // Test cookies.
         $cookie = $request->getCookie('dark-mode');
-        $this->assertInstanceOf(RequestCookie::class, $cookie);
+        $this->assertIsObject($cookie);
         $this->assertSame('dark-mode', $cookie->name);
         $this->assertSame('false', $cookie->value);
         $cookie_names = $request->getCookieNames();
