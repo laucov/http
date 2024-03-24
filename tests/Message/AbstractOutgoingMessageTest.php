@@ -83,6 +83,7 @@ class AbstractOutgoingMessageTest extends TestCase
     }
 
     /**
+     * @covers ::getHeaderNames
      * @covers ::setHeader
      * @uses Laucov\Http\Message\AbstractMessage::getHeader
      */
@@ -90,6 +91,13 @@ class AbstractOutgoingMessageTest extends TestCase
     {
         $this->message->setHeader('Content-Length', '10');
         $this->assertSame('10', $this->message->getHeader('Content-Length'));
+        $this->message->setHeader('Content-Type', 'application/json');
+
+        $header_names = $this->message->getHeaderNames();
+        $this->assertIsArray($header_names);
+        $this->assertCount(2, $header_names);
+        $this->assertSame('Content-Length', $header_names[0]);
+        $this->assertSame('Content-Type', $header_names[1]);
     }
 
     /**

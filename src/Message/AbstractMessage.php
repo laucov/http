@@ -87,6 +87,14 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
+     * Get all registered header names.
+     */
+    public function getHeaderNames(): array
+    {
+        return array_keys($this->headers);
+    }
+
+    /**
      * Get the HTTP protocol version.
      */
     public function getProtocolVersion(): null|string

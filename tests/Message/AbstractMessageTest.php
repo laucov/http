@@ -49,11 +49,15 @@ final class AbstractMessageTest extends TestCase
     /**
      * @covers ::getHeader
      * @covers ::getHeaderAsList
+     * @covers ::getHeaderNames
      */
     public function testCanGetHeader(): void
     {
         $this->assertNull($this->message->getHeader('Content-Type'));
         $this->assertNull($this->message->getHeaderAsList('Cache-Control'));
+        $header_names = $this->message->getHeaderNames();
+        $this->assertIsArray($header_names);
+        $this->assertCount(0, $header_names);
     }
 
     /**

@@ -45,6 +45,7 @@ class AbstractIncomingMessageTest extends TestCase
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\AbstractMessage::getHeader
      * @uses Laucov\Http\Message\AbstractMessage::getHeaderAsList
+     * @uses Laucov\Http\Message\AbstractMessage::getHeaderNames
      */
     public function testCanInstantiate(): void
     {
@@ -70,6 +71,13 @@ class AbstractIncomingMessageTest extends TestCase
         $this->assertCount(2, $list);
         $this->assertContains('must-understand', $list);
         $this->assertContains('no-store', $list);
+
+        // Check header names.
+        $header_names = $message->getHeaderNames();
+        $this->assertIsArray($header_names);
+        $this->assertCount(2, $header_names);
+        $this->assertSame('Cache-Control', $header_names[0]);
+        $this->assertSame('Content-Length', $header_names[1]);
     }
 
     /**
