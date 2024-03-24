@@ -401,7 +401,7 @@ class Router
             }
             return;
         }
-        
+
         // Validate each type from union types.
         if ($type instanceof \ReflectionUnionType) {
             foreach ($type->getTypes() as $subtype) {

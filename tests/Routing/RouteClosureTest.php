@@ -84,7 +84,7 @@ class RouteClosureTest extends TestCase
 
         // Add prelude names.
         $object->setPreludeNames('a', 'b');
-        
+
         // Check new values.
         $preludes = $object->getPreludeNames();
         $this->assertIsArray($preludes);

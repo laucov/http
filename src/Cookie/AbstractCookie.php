@@ -36,7 +36,7 @@ abstract class AbstractCookie implements \Stringable
     /**
      * Get the cookie string representation.
      */
-    public abstract function __toString(): string;
+    abstract public function __toString(): string;
 
     /**
      * Create the cookie instance.

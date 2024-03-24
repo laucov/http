@@ -63,22 +63,19 @@ class RouteTest extends TestCase
 
         // Create preludes.
         $preludes = [
-            new class () implements PreludeInterface
-            {
+            new class () implements PreludeInterface {
                 public function run(): null
                 {
                     return null;
                 }
             },
-            new class () implements PreludeInterface
-            {
+            new class () implements PreludeInterface {
                 public function run(): string
                 {
                     return 'Interrupted!';
                 }
             },
-            new class () implements PreludeInterface
-            {
+            new class () implements PreludeInterface {
                 public function run(): ResponseInterface
                 {
                     return new IncomingResponse('Interrupted again!');

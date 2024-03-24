@@ -30,7 +30,6 @@ declare(strict_types=1);
 
 namespace Tests\Message;
 
-use Laucov\Arrays\ArrayReader;
 use Laucov\Files\Resource\Uri;
 use Laucov\Http\Cookie\RequestCookie;
 use Laucov\Http\Message\IncomingRequest;

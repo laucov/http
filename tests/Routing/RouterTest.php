@@ -149,7 +149,7 @@ class RouterTest extends TestCase
             ->setCallableRoute('GET', '', $closures[15])
             ->pushPrefix('classes/x')
                 ->setClassRoute('GET', 'hi', X::class, 'greet', 'Hi', 'John');
-        
+
         // Set tests and expectations.
         $tests = [
             // Assert that route A exists.
@@ -232,10 +232,10 @@ class RouterTest extends TestCase
             ->addPrelude('p1', PreludeA::class, [])
             ->addPrelude('p2', PreludeA::class, ['Hello, Universe!'])
             ->addPrelude('p3', PreludeB::class, []);
-        
+
         // Create closures.
         $closure = fn (): string => 'Hello, World!';
-        
+
         // Set routes.
         $this->router
             ->setPreludes('p1')
@@ -247,7 +247,7 @@ class RouterTest extends TestCase
             ->setPreludes('p1', 'p3')
                 ->setCallableRoute('GET', 'route-d', $closure)
                 ->setCallableRoute('POST', 'route-d', $closure);
-        
+
         // Test routes.
         $tests = [
             // Test non-interrupting preludes.
@@ -317,7 +317,7 @@ class RouterTest extends TestCase
                 ->pushPrefix('y')
                     ->setClassRoute('POST', 'method', Y::class, 'getMethod')
                     ->setClassRoute('GET', 'protocol', Y::class, 'getProtocol');
-        
+
         // Set tests.
         $tests = [
             ['GET', 'server/x/y/z', $server, 'x, foobar.com, 1.1, y, z'],
@@ -435,7 +435,8 @@ class PreludeB implements PreludeInterface
     public function __construct(
         protected RequestInterface $request,
         protected ServerInfo $server,
-    ) {}
+    ) {
+    }
 
     public function run(): null|ResponseInterface
     {
@@ -455,7 +456,8 @@ class X
     public function __construct(
         protected string $greeting,
         protected string $name,
-    ) {}
+    ) {
+    }
 
     public function greet(): string
     {
@@ -489,7 +491,7 @@ class Z
     {
         return 123456;
     }
-    
+
     public function c(array $foo): string
     {
         return 'Hello, World!';
@@ -499,7 +501,7 @@ class Z
     {
         return 'Hello, Universe!';
     }
-    
+
     public function e(string $a, float $b): string|array
     {
         return 'Hello, Planet!';

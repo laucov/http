@@ -108,7 +108,7 @@ class RouteTest extends TestCase
         // Create closure.
         $closure = new RouteClosure(fn (): string => 'Hello, World!');
         $request = new IncomingRequest('');
-        
+
         // Create preludes.
         $p1 = new Prelude1($request, []);
         $p2 = new Prelude2($request, []);
