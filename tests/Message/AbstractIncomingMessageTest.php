@@ -77,6 +77,7 @@ class AbstractIncomingMessageTest extends TestCase
             'headers' => [
                 'Cache-Control' => 'must-understand, no-store',
                 'Content-Length' => '44',
+                'Set-Cookie' => ['foo=a', 'bar=b'],
             ],
             'protocol_version' => null,
         ]);
@@ -97,9 +98,10 @@ class AbstractIncomingMessageTest extends TestCase
         // Check header names.
         $header_names = $message->getHeaderNames();
         $this->assertIsArray($header_names);
-        $this->assertCount(2, $header_names);
+        $this->assertCount(3, $header_names);
         $this->assertSame('Cache-Control', $header_names[0]);
         $this->assertSame('Content-Length', $header_names[1]);
+        $this->assertSame('Set-Cookie', $header_names[2]);
     }
 
     /**

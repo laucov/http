@@ -40,8 +40,11 @@ abstract class AbstractOutgoingMessage extends AbstractMessage
      * 
      * If the header exists, appends the value, otherwise creates it.
      */
-    public function addHeader(string $name, string $value): static
-    {
+    public function addHeader(
+        string $name,
+        string $value,
+        int $index = 0,
+    ): static {
         $name = strtolower($name);
         $list = $this->getHeaderAsList($name);
 
@@ -50,7 +53,9 @@ abstract class AbstractOutgoingMessage extends AbstractMessage
         }
 
         $list[] = trim($value);
-        return $this->setHeader($name, implode(', ', $list));
+        $this->headers[$name][$index] = implode(', ', $list);
+
+        return $this;
     }
     /**
      * Set the message body.
@@ -66,10 +71,22 @@ abstract class AbstractOutgoingMessage extends AbstractMessage
     /**
      * Set a message header.
      */
-    public function setHeader(string $name, string $value): static
-    {
+    public function setHeader(
+        string $name,
+        string $value,
+        bool $replace = true,
+    ): static {
+        // Format name and value.
         $name = strtolower($name);
-        $this->headers[$name] = [trim($value)];
+        $value = trim($value);
+
+        // Add or replace header.
+        if ($replace) {
+            $this->headers[$name] = [$value];
+        } else {
+            $this->headers[$name][] = $value;
+        }
+
         return $this;
     }
 

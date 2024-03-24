@@ -84,6 +84,7 @@ class AbstractOutgoingMessageTest extends TestCase
 
     /**
      * @covers ::getHeaderNames
+     * @covers ::getHeaders
      * @covers ::setHeader
      * @uses Laucov\Http\Message\AbstractMessage::getHeader
      */
@@ -93,13 +94,30 @@ class AbstractOutgoingMessageTest extends TestCase
         $this->assertSame('10', $this->message->getHeader('Content-Length'));
         $this->assertSame('10', $this->message->getHeader('CONTENT-Length'));
         $this->assertSame('10', $this->message->getHeader('content-length'));
-        $this->message->setHeader('Content-Type', 'application/json');
 
+        $this->message->setHeader('Set-Cookie', 'foo=bar; Secure');
+        $this->message->setHeader('Set-Cookie', 'foobar=baz', false);
+        $this->assertSame(
+            'foo=bar; Secure',
+            $this->message->getHeader('set-cookie', 0),
+        );
+        $this->assertSame(
+            'foobar=baz',
+            $this->message->getHeader('set-cookie', 1),
+        );
+        $cookies = $this->message->getHeaders('Set-Cookie');
+        $this->assertIsArray($cookies);
+        $this->assertCount(2, $cookies);
+        $this->assertSame('foo=bar; Secure', $cookies[0]);
+        $this->assertSame('foobar=baz', $cookies[1]);
+
+        $this->message->setHeader('Content-Type', 'application/json');
         $header_names = $this->message->getHeaderNames();
         $this->assertIsArray($header_names);
-        $this->assertCount(2, $header_names);
+        $this->assertCount(3, $header_names);
         $this->assertSame('Content-Length', $header_names[0]);
-        $this->assertSame('Content-Type', $header_names[1]);
+        $this->assertSame('Set-Cookie', $header_names[1]);
+        $this->assertSame('Content-Type', $header_names[2]);
     }
 
     /**
