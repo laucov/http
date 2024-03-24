@@ -91,6 +91,8 @@ class AbstractOutgoingMessageTest extends TestCase
     {
         $this->message->setHeader('Content-Length', '10');
         $this->assertSame('10', $this->message->getHeader('Content-Length'));
+        $this->assertSame('10', $this->message->getHeader('CONTENT-Length'));
+        $this->assertSame('10', $this->message->getHeader('content-length'));
         $this->message->setHeader('Content-Type', 'application/json');
 
         $header_names = $this->message->getHeaderNames();
@@ -124,13 +126,13 @@ class AbstractOutgoingMessageTest extends TestCase
         $this->message->setHeader('Content-Length', " 20 \n\n   \t");
         $this->assertSame('20', $this->message->getHeader('Content-Length'));
 
-        $this->message->addHeader('Cache-Control', "\n\n\n\r must-understand");
-        $this->message->addHeader('Cache-Control', "   no-store ");
+        $this->message->addHeader('Cache-CONTROL', "\n\n\n\r must-understand");
+        $this->message->addHeader('CACHE-Control', "   no-store ");
 
         $line = $this->message->getHeader('Cache-Control');
         $this->assertSame('must-understand, no-store', $line);
 
-        $list = $this->message->getHeaderAsList('Cache-Control');
+        $list = $this->message->getHeaderAsList('cAcHe-CoNtRoL');
         $this->assertCount(2, $list);
         $this->assertContains('must-understand', $list);
         $this->assertContains('no-store', $list);

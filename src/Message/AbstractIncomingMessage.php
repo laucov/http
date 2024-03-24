@@ -52,7 +52,7 @@ class AbstractIncomingMessage extends AbstractMessage
                 $message = 'Header name and value must both be strings.';
                 throw new \InvalidArgumentException($message);
             }
-            $this->headers[$name] = $value;
+            $this->headers[strtolower($name)] = $value;
         }
 
         // Set protocol version.

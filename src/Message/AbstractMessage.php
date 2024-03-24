@@ -65,6 +65,7 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function getHeader(string $name): null|string
     {
+        $name = strtolower($name);
         return array_key_exists($name, $this->headers)
             ? $this->headers[$name]
             : null;
@@ -77,6 +78,7 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function getHeaderAsList(string $name): null|array
     {
+        $name = strtolower($name);
         $header = $this->getHeader($name);
         if ($header === null) {
             return null;
@@ -91,7 +93,15 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function getHeaderNames(): array
     {
-        return array_keys($this->headers);
+        // Get names.
+        $names = array_keys($this->headers);
+
+        // Beautify.
+        foreach ($names as &$name) {
+            $name = implode('-', (array_map('ucfirst', explode('-', $name))));
+        }
+
+        return $names;
     }
 
     /**

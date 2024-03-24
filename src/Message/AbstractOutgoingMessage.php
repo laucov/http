@@ -42,6 +42,7 @@ abstract class AbstractOutgoingMessage extends AbstractMessage
      */
     public function addHeader(string $name, string $value): static
     {
+        $name = strtolower($name);
         $list = $this->getHeaderAsList($name);
 
         if ($list === null) {
@@ -67,6 +68,7 @@ abstract class AbstractOutgoingMessage extends AbstractMessage
      */
     public function setHeader(string $name, string $value): static
     {
+        $name = strtolower($name);
         $this->headers[$name] = trim($value);
         return $this;
     }
