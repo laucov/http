@@ -111,6 +111,8 @@ abstract class AbstractMessage implements MessageInterface
 
     /**
      * Get all registered header names.
+     * 
+     * @return string[]
      */
     public function getHeaderNames(): array
     {
