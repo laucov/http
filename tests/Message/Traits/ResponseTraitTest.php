@@ -39,19 +39,37 @@ use PHPUnit\Framework\TestCase;
 class ResponseTraitTest extends TestCase
 {
     /**
+     * @var ResponseTrait
+     */
+    protected object $response;
+
+    /**
+     * @covers ::getCookie
+     * @covers ::getCookieNames
+     */
+    public function testCanGetCookies(): void
+    {
+        // Test default cookies.
+        $this->assertNull($this->response->getCookie('name'));
+        $names = $this->response->getCookieNames();
+        $this->assertIsArray($names);
+        $this->assertCount(0, $names);
+    }
+
+    /**
      * @covers ::getStatusCode
      * @covers ::getStatusText
      */
     public function testCanGetStatus(): void
     {
-        // Create response.
-        /** @var ResponseTrait */
-        $response = $this->getMockForTrait(ResponseTrait::class);
-
         // Test default status code.
-        $this->assertSame(200, $response->getStatusCode());
-
+        $this->assertSame(200, $this->response->getStatusCode());
         // Test default status text.
-        $this->assertSame('OK', $response->getStatusText());
+        $this->assertSame('OK', $this->response->getStatusText());
+    }
+
+    protected function setUp(): void
+    {
+        $this->response = $this->getMockForTrait(ResponseTrait::class);
     }
 }

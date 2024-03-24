@@ -66,6 +66,7 @@ class OutgoingResponseTest extends TestCase
      * @covers ::setCookie
      * @uses Laucov\Http\Cookie\AbstractCookie::__construct
      * @uses Laucov\Http\Cookie\ResponseCookie::__construct
+     * @uses Laucov\Http\Message\Traits\ResponseTrait::getCookieNames
      */
     public function testCanSetCookies(): void
     {
@@ -73,5 +74,10 @@ class OutgoingResponseTest extends TestCase
         $this->response->setCookie($cookie);
         $this->assertSame($cookie, $this->response->getCookie('cookie-a'));
         $this->assertNull($this->response->getCookie('cookie-b'));
+
+        $cookie_names = $this->response->getCookieNames();
+        $this->assertIsArray($cookie_names);
+        $this->assertCount(1, $cookie_names);
+        $this->assertSame('cookie-a', $cookie_names[0]);
     }
 }

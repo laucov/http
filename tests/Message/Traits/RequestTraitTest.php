@@ -53,6 +53,19 @@ class RequestTraitTest extends TestCase
     }
 
     /**
+     * @covers ::getCookie
+     * @covers ::getCookieNames
+     */
+    public function testCanGetCookies(): void
+    {
+        // Test default cookies.
+        $this->assertNull($this->request->getCookie('name'));
+        $names = $this->request->getCookieNames();
+        $this->assertIsArray($names);
+        $this->assertCount(0, $names);
+    }
+
+    /**
      * @covers ::getUri
      */
     public function testUriMustBeInitialized(): void

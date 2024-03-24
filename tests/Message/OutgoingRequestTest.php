@@ -77,6 +77,7 @@ class OutgoingRequestTest extends TestCase
      * @covers ::setCookie
      * @uses Laucov\Http\Cookie\AbstractCookie::__construct
      * @uses Laucov\Http\Message\OutgoingRequest::__construct
+     * @uses Laucov\Http\Message\Traits\RequestTrait::getCookieNames
      */
     public function testCanSetCookies(): void
     {
@@ -84,6 +85,10 @@ class OutgoingRequestTest extends TestCase
         $this->request->setCookie($cookie);
         $this->assertSame($cookie, $this->request->getCookie('foo'));
         $this->assertNull($this->request->getCookie('baz'));
+        $cookie_names = $this->request->getCookieNames();
+        $this->assertIsArray($cookie_names);
+        $this->assertCount(1, $cookie_names);
+        $this->assertSame('foo', $cookie_names[0]);
     }
 
     /**

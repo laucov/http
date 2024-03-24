@@ -61,6 +61,16 @@ trait ResponseTrait
     }
 
     /**
+     * Get all registered cookie names.
+     * 
+     * @return string[]
+     */
+    public function getCookieNames(): array
+    {
+        return array_keys($this->cookies);
+    }
+
+    /**
      * Get the response status code.
      */
     public function getStatusCode(): int

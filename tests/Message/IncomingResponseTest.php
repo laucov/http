@@ -69,6 +69,7 @@ class IncomingResponseTest extends TestCase
      * @uses Laucov\Http\Message\AbstractMessage::getHeaderLine
      * @uses Laucov\Http\Message\AbstractMessage::getProtocolVersion
      * @uses Laucov\Http\Message\Traits\ResponseTrait::getCookie
+     * @uses Laucov\Http\Message\Traits\ResponseTrait::getCookieNames
      * @uses Laucov\Http\Message\Traits\ResponseTrait::getStatusCode
      * @uses Laucov\Http\Message\Traits\ResponseTrait::getStatusText
      */
@@ -109,5 +110,10 @@ class IncomingResponseTest extends TestCase
         // Test cookies.
         $this->assertSame($cookies[0], $response->getCookie('cookie-1'));
         $this->assertSame($cookies[1], $response->getCookie('cookie-2'));
+        $cookie_names = $response->getCookieNames();
+        $this->assertIsArray($cookie_names);
+        $this->assertCount(2, $cookie_names);
+        $this->assertSame('cookie-1', $cookie_names[0]);
+        $this->assertSame('cookie-2', $cookie_names[1]);
     }
 }

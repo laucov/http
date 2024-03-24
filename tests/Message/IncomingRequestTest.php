@@ -123,6 +123,7 @@ class IncomingRequestTest extends TestCase
      * @uses Laucov\Http\Message\AbstractMessage::getProtocolVersion
      * @uses Laucov\Http\Message\IncomingRequest::__construct
      * @uses Laucov\Http\Message\Traits\RequestTrait::getCookie
+     * @uses Laucov\Http\Message\Traits\RequestTrait::getCookieNames
      * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
      * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
      * @uses Laucov\Files\Resource\Uri::__construct
@@ -179,6 +180,11 @@ class IncomingRequestTest extends TestCase
         $this->assertInstanceOf(RequestCookie::class, $cookie);
         $this->assertSame('dark-mode', $cookie->name);
         $this->assertSame('false', $cookie->value);
+        $cookie_names = $request->getCookieNames();
+        $this->assertIsArray($cookie_names);
+        $this->assertCount(2, $cookie_names);
+        $this->assertSame('dark-mode', $cookie_names[0]);
+        $this->assertSame('name', $cookie_names[1]);
     }
 
 
