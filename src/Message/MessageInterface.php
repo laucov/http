@@ -46,16 +46,34 @@ interface MessageInterface
     public function getBody(): null|StringSource;
 
     /**
-     * Get a message header.
+     * Get the first line for a header name.
+     * 
+     * @deprecated 2.0.0 Use `getHeaderLine()` instead.
+     * @codeCoverageIgnore
      */
     public function getHeader(string $name): null|string;
 
     /**
-     * Get a message header.
+     * Get values for a header name as a list.
      * 
-     * @return null|string[]
+     * @return string[]
      */
-    public function getHeaderAsList(string $name): null|array;
+    public function getHeaderAsList(string $name): array;
+
+    /**
+     * Get the first line for a header name.
+     */
+    public function getHeaderLine(string $name): null|string;
+
+    /**
+     * Get all lines for a header name.
+     */
+    public function getHeaderLines(string $name): array;
+
+    /**
+     * Get all registered header names.
+     */
+    public function getHeaderNames(): array;
 
     /**
      * Get the HTTP protocol version.
