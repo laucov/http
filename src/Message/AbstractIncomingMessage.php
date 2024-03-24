@@ -48,10 +48,28 @@ class AbstractIncomingMessage extends AbstractMessage
 
         // Set headers.
         foreach ($headers as $name => $value) {
-            if (!is_string($name) || !is_string($value)) {
-                $message = 'Header name and value must both be strings.';
+            // Check if the header name is a string.
+            if (!is_string($name)) {
+                $message = 'All header names must be strings.';
                 throw new \InvalidArgumentException($message);
             }
+            // Check the header value.
+            if (is_string($value)) {
+                // Transform string into array.
+                $value = [$value];
+            } elseif (is_array($value)) {
+                // Check each element.
+                foreach ($value as $item) {
+                    if (!is_string($item)) {
+                        $msg = 'Header array values must only have strings.';
+                        throw new \InvalidArgumentException($msg);
+                    }
+                }
+            } else {
+                $message = 'All header values must be strings or arrays.';
+                throw new \InvalidArgumentException($message);
+            }
+            // Set values.
             $this->headers[strtolower($name)] = $value;
         }
 

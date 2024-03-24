@@ -38,6 +38,28 @@ use PHPUnit\Framework\TestCase;
  */
 class AbstractIncomingMessageTest extends TestCase
 {
+    public function invalidHeaderProvider(): array
+    {
+        return [
+            [[
+                'Cache-Control' => 'must-understand, no-store',
+                'X-Foobar' => ['foo', 'bar'],
+                'Content-Length' => 44,
+            ]],
+            [[
+                'Cache-Control' => 'must-understand, no-store',
+                'Content-Length' => '44',
+                'X-Foobar' => ['foo', ['bar']],
+            ]],
+            [[
+                'Cache-Control' => 'must-understand, no-store',
+                'Content-Length' => '44',
+                'X-Foobar' => ['foo', 'bar'],
+                3 => 'Hello, World!',
+            ]],
+        ];
+    }
+
     /**
      * @covers ::__construct
      * @uses Laucov\Files\Resource\StringSource::__construct
@@ -83,16 +105,14 @@ class AbstractIncomingMessageTest extends TestCase
     /**
      * @covers ::__construct
      * @uses Laucov\Files\Resource\StringSource::__construct
+     * @dataProvider invalidHeaderProvider
      */
-    public function testMustPassStringHeaders(): void
+    public function testMustPassValidHeaders(array $headers): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->getInstance([
             'content' => '',
-            'headers' => [
-                'Cache-Control' => ['must-understand', 'no-store'],
-                'Content-Length' => 44,
-            ],
+            'headers' => $headers,
             'protocol_version' => null,
         ]);
     }
