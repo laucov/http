@@ -102,6 +102,8 @@ abstract class AbstractMessage implements MessageInterface
 
     /**
      * Get all lines for a header name.
+     * 
+     * @return string[]
      */
     public function getHeaderLines(string $name): array
     {

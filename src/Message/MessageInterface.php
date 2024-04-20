@@ -62,18 +62,20 @@ interface MessageInterface
 
     /**
      * Get the first line for a header name.
-     * 
-     * @return string[]
      */
     public function getHeaderLine(string $name): null|string;
 
     /**
      * Get all lines for a header name.
+     * 
+     * @return string[]
      */
     public function getHeaderLines(string $name): array;
 
     /**
      * Get all registered header names.
+     * 
+     * @return string[]
      */
     public function getHeaderNames(): array;
 
