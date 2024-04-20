@@ -159,6 +159,8 @@ class AbstractOutgoingMessageTest extends TestCase
         $this->assertNull($this->message->getProtocolVersion());
         $this->message->setProtocolVersion('1.1');
         $this->assertSame('1.1', $this->message->getProtocolVersion());
+        $this->message->setProtocolVersion(null);
+        $this->assertSame(null, $this->message->getProtocolVersion());
 
         $this->expectException(\InvalidArgumentException::class);
         $this->message->setProtocolVersion('1.9');

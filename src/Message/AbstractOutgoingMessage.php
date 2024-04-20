@@ -123,13 +123,19 @@ abstract class AbstractOutgoingMessage extends AbstractMessage
      */
     public function setProtocolVersion(null|string $version): static
     {
-        if (!in_array($version, static::PROTOCOL_VERSIONS, true)) {
+        // Check requested version.
+        if (
+            $version !== null
+            && !in_array($version, static::PROTOCOL_VERSIONS, true)
+        ) {
             $versions = implode(', ', static::PROTOCOL_VERSIONS);
             $message = 'Unknown HTTP version "%s". Supported values: %s.';
             throw new \InvalidArgumentException(
                 sprintf($message, $version, $versions),
             );
         }
+
+        // Set protocol version.
         $this->protocolVersion = $version;
 
         return $this;
