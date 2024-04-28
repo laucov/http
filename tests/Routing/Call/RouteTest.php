@@ -31,10 +31,12 @@ declare(strict_types=1);
 namespace Tests\Routing\Call;
 
 use Laucov\Http\Message\IncomingResponse;
+use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Routing\Call\Callback;
 use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
 use Laucov\Http\Routing\Call\Route;
+use Laucov\Http\Routing\Exceptions\HttpException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -57,8 +59,9 @@ class RouteTest extends TestCase
                 null,
                 [],
             ),
-            new Callback([B::class, 'y'], [2, 1], []),
-            new Callback([B::class, 'y'], [3, 5], []),
+            new Callback([B::class, 'f'], [2, 1], []),
+            new Callback([B::class, 'f'], [3, 5], []),
+            new Callback([B::class, 'g'], [1, 2], []),
         ];
 
         // Create preludes.
@@ -81,6 +84,16 @@ class RouteTest extends TestCase
                     return new IncomingResponse('Interrupted again!');
                 }
             },
+            new class () implements PreludeInterface {
+                public function run(): null
+                {
+                    $response = new OutgoingResponse();
+                    $response
+                        ->setStatus(400, 'Bad Request')
+                        ->setBody('Exception!');
+                    throw new HttpException($response);
+                }
+            },
         ];
 
         return [
@@ -92,6 +105,9 @@ class RouteTest extends TestCase
             [[$callbacks[0], ['Mary'], [$preludes[0]]], 'Hello, Mary!', true],
             [[$callbacks[0], ['Mary'], [$preludes[1]]], 'Interrupted!', true],
             [[$callbacks[0], ['Mary'], [$preludes[2]]], 'Interrupted again!', false],
+            [[$callbacks[4], ['1'], []], '3', true],
+            [[$callbacks[4], ['0'], []], 'Cannot divide by zero!', false],
+            [[$callbacks[4], ['0'], [$preludes[3]]], 'Exception!', false],
         ];
     }
 
@@ -99,12 +115,19 @@ class RouteTest extends TestCase
      * @covers ::__construct
      * @covers ::createResponse
      * @covers ::run
+     * @covers ::runCallback
+     * @covers ::runPreludes
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\AbstractMessage::getHeaderLine
      * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
      * @uses Laucov\Http\Message\AbstractOutgoingMessage::setHeaderLine
      * @uses Laucov\Http\Message\IncomingResponse::__construct
+     * @uses Laucov\Http\Message\OutgoingResponse::setStatus
+     * @uses Laucov\Http\Message\Traits\ResponseTrait::getStatusCode
+     * @uses Laucov\Http\Message\Traits\ResponseTrait::getStatusText
+     * @uses Laucov\Http\Routing\Exceptions\HttpException::__construct
+     * @uses Laucov\Http\Routing\Exceptions\HttpException::getResponse
      * @dataProvider callbackProvider
      */
     public function testCanSetupAndRun(
@@ -134,6 +157,8 @@ class RouteTest extends TestCase
      * @uses Laucov\Http\Routing\Call\Callback::__construct
      * @uses Laucov\Http\Routing\Call\Route::__construct
      * @uses Laucov\Http\Routing\Call\Route::run
+     * @uses Laucov\Http\Routing\Call\Route::runCallback
+     * @uses Laucov\Http\Routing\Call\Route::runPreludes
      */
     public function testCallbackMustReturnValidOutput(): void
     {
@@ -146,16 +171,48 @@ class RouteTest extends TestCase
     }
 }
 
+/**
+ * Provide some functions for route testing.
+ */
 class B
 {
+    /**
+     * Create instance.
+     */
     public function __construct(
         protected int $a,
         protected int $b,
     ) {
     }
 
-    public function y(int $x): string
+    /**
+     * Calculate `f(x) = ax + b`.
+     */
+    public function f(int $x): string
     {
-        return (string) ($this->a * $x + $this->b);
+        // Calculate.
+        $y = $this->a * $x + $this->b;
+
+        return (string) $y;
+    }
+
+    /**
+     * Calculate `f(x) = (ax + b) / x`.
+     */
+    public function g(int $x): string
+    {
+        // Check X value.
+        if ($x === 0) {
+            $response = new OutgoingResponse();
+            $response
+                ->setStatus(422, 'Unprocessable Entity')
+                ->setBody('Cannot divide by zero!');
+            throw new HttpException($response);
+        }
+
+        // Calculate.
+        $y = ($this->a * $x + $this->b) / $x;
+
+        return (string) $y;
     }
 }

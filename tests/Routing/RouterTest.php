@@ -93,6 +93,8 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\Call\Route::__construct
      * @uses Laucov\Http\Routing\Call\Route::createResponse
      * @uses Laucov\Http\Routing\Call\Route::run
+     * @uses Laucov\Http\Routing\Call\Route::runCallback
+     * @uses Laucov\Http\Routing\Call\Route::runPreludes
      * @uses Laucov\Http\Server\ServerInfo::__construct
      */
     public function testCanCaptureSegments(): void
@@ -220,6 +222,8 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\Call\Route::__construct
      * @uses Laucov\Http\Routing\Call\Route::createResponse
      * @uses Laucov\Http\Routing\Call\Route::run
+     * @uses Laucov\Http\Routing\Call\Route::runCallback
+     * @uses Laucov\Http\Routing\Call\Route::runPreludes
      * @uses Laucov\Http\Routing\Router::__construct
      * @uses Laucov\Http\Routing\Router::getRouteKeys
      * @uses Laucov\Http\Routing\Router::setCallableRoute
@@ -280,6 +284,8 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Routing\Call\Route::__construct
      * @uses Laucov\Http\Routing\Call\Route::createResponse
      * @uses Laucov\Http\Routing\Call\Route::run
+     * @uses Laucov\Http\Routing\Call\Route::runCallback
+     * @uses Laucov\Http\Routing\Call\Route::runPreludes
      * @uses Laucov\Http\Routing\Router::__construct
      * @uses Laucov\Http\Routing\Router::getRouteKeys
      * @uses Laucov\Http\Routing\Router::pushPrefix

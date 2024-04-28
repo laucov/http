@@ -32,6 +32,7 @@ use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
 use Laucov\Http\Routing\Call\Interfaces\RouteInterface;
+use Laucov\Http\Routing\Exceptions\HttpException;
 
 /**
  * Stores information about a processed route callback.
@@ -66,32 +67,20 @@ class Route implements RouteInterface
      */
     public function run(): ResponseInterface
     {
-        // Run preludes.
-        foreach ($this->preludes as $prelude) {
-            $prelude_result = $prelude->run();
-            if ($prelude_result !== null) {
-                return $prelude_result instanceof ResponseInterface
-                    ? $prelude_result
-                    : $this->createResponse($prelude_result);
+        try {
+            // Run preludes.
+            $preludes_result = $this->runPreludes();
+            if ($preludes_result !== null) {
+                return $preludes_result;
             }
+            // Run callback.
+            return $this->runCallback();
+        } catch (HttpException $e) {
+            // Use exception response.
+            $result = $e->getResponse();
         }
 
-        // Run callback.
-        $callback = $this->callback->callback;
-        if (is_callable($callback)) {
-            // Execute callable.
-            $result = $callback(...$this->parameters);
-        } else {
-            // Instantiate class and call method.
-            [$class_name, $method_name] = $callback;
-            $instance = new $class_name(...$this->callback->constructorArgs);
-            $result = $instance->{$method_name}(...$this->parameters);
-        }
-
-        // Process result.
-        return $result instanceof ResponseInterface
-            ? $result
-            : $this->createResponse($result);
+        return $result;
     }
 
     /**
@@ -113,5 +102,48 @@ class Route implements RouteInterface
         // Fail if received other type of content.
         $message = 'Received an unexpected result from a route closure.';
         throw new \RuntimeException($message);
+    }
+
+    /**
+     * Run the callback's main procedure.
+     */
+    protected function runCallback(): ResponseInterface
+    {
+        // Get callable or class method call.
+        $callback = $this->callback->callback;
+
+        // Get result from callable or method.
+        if (is_callable($callback)) {
+            // Execute callable.
+            $result = $callback(...$this->parameters);
+        } else {
+            // Instantiate class and call method.
+            [$class_name, $method_name] = $callback;
+            $instance = new $class_name(...$this->callback->constructorArgs);
+            $result = $instance->{$method_name}(...$this->parameters);
+        }
+
+        // Process result.
+        return $result instanceof ResponseInterface
+            ? $result
+            : $this->createResponse($result);
+    }
+
+    /**
+     * Run all preludes procedures.
+     */
+    protected function runPreludes(): null|ResponseInterface
+    {
+        // Run each prelude.
+        foreach ($this->preludes as $prelude) {
+            $prelude_result = $prelude->run();
+            if ($prelude_result !== null) {
+                return $prelude_result instanceof ResponseInterface
+                    ? $prelude_result
+                    : $this->createResponse($prelude_result);
+            }
+        }
+
+        return null;
     }
 }
