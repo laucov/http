@@ -30,7 +30,6 @@ declare(strict_types=1);
 
 namespace Tests\Message;
 
-use Laucov\Arrays\ArrayBuilder;
 use Laucov\Http\Cookie\RequestCookie;
 use Laucov\Http\Message\OutgoingRequest;
 use Laucov\Files\Resource\Uri;

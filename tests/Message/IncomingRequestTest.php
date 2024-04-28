@@ -31,7 +31,6 @@ declare(strict_types=1);
 namespace Tests\Message;
 
 use Laucov\Files\Resource\Uri;
-use Laucov\Http\Cookie\RequestCookie;
 use Laucov\Http\Message\IncomingRequest;
 use PHPUnit\Framework\TestCase;
 

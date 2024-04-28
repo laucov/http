@@ -30,7 +30,6 @@ declare(strict_types=1);
 
 namespace Tests\Message;
 
-use Laucov\Files\Resource\StringSource;
 use Laucov\Http\Message\AbstractIncomingMessage;
 use PHPUnit\Framework\TestCase;
 
