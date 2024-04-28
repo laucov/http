@@ -84,14 +84,14 @@ class RouteTest extends TestCase
         ];
 
         return [
-            [[$callbacks[0], ['John'], []], 'Hello, John!'],
-            [[$callbacks[1], [5, 8], []], 'x + y = 13'],
-            [[$callbacks[2], [5], []], '11'],
-            [[$callbacks[2], [3], []], '7'],
-            [[$callbacks[3], [5], []], '20'],
-            [[$callbacks[0], ['Mary'], [$preludes[0]]], 'Hello, Mary!'],
-            [[$callbacks[0], ['Mary'], [$preludes[1]]], 'Interrupted!'],
-            [[$callbacks[0], ['Mary'], [$preludes[2]]], 'Interrupted again!'],
+            [[$callbacks[0], ['John'], []], 'Hello, John!', true],
+            [[$callbacks[1], [5, 8], []], 'x + y = 13', false],
+            [[$callbacks[2], [5], []], '11', true],
+            [[$callbacks[2], [3], []], '7', true],
+            [[$callbacks[3], [5], []], '20', true],
+            [[$callbacks[0], ['Mary'], [$preludes[0]]], 'Hello, Mary!', true],
+            [[$callbacks[0], ['Mary'], [$preludes[1]]], 'Interrupted!', true],
+            [[$callbacks[0], ['Mary'], [$preludes[2]]], 'Interrupted again!', false],
         ];
     }
 
@@ -101,17 +101,32 @@ class RouteTest extends TestCase
      * @covers ::run
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getBody
+     * @uses Laucov\Http\Message\AbstractMessage::getHeaderLine
      * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
+     * @uses Laucov\Http\Message\AbstractOutgoingMessage::setHeaderLine
      * @uses Laucov\Http\Message\IncomingResponse::__construct
      * @dataProvider callbackProvider
      */
-    public function testCanSetupAndRun(array $args, string $expected): void
-    {
+    public function testCanSetupAndRun(
+        array $args,
+        string $expected,
+        bool $assert_default_headers,
+    ): void {
+        // Create route and get response.
         $route = new Route(...$args);
         $response = $route->run();
         $this->assertIsObject($response);
-        $content = (string) $response->getBody();
-        $this->assertSame($expected, $content);
+
+        // Check headers.
+        if ($assert_default_headers) {
+            $content_length = $response->getHeaderLine('Content-Length');
+            $this->assertSame((string) strlen($expected), $content_length);
+            $content_type = $response->getHeaderLine('Content-Type');
+            $this->assertSame('text/html', $content_type);
+        }
+
+        // Check content.
+        $this->assertSame($expected, (string) $response->getBody());
     }
 
     /**

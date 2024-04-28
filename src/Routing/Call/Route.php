@@ -102,8 +102,12 @@ class Route implements RouteInterface
         // Handle string or stringable object.
         if (is_string($content) || $content instanceof \Stringable) {
             // Create response from string.
+            $content = (string) $content;
             $response = new OutgoingResponse();
-            return $response->setBody((string) $content);
+            return $response
+                ->setBody($content)
+                ->setHeaderLine('Content-Length', strlen($content))
+                ->setHeaderLine('Content-Type', 'text/html');
         }
 
         // Fail if received other type of content.

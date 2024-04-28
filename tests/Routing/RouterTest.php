@@ -85,6 +85,7 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
+     * @uses Laucov\Http\Message\AbstractOutgoingMessage::setHeaderLine
      * @uses Laucov\Http\Message\IncomingRequest::__construct
      * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
      * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
@@ -206,6 +207,7 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
+     * @uses Laucov\Http\Message\AbstractOutgoingMessage::setHeaderLine
      * @uses Laucov\Http\Message\IncomingRequest::__construct
      * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
      * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
@@ -270,6 +272,7 @@ class RouterTest extends TestCase
      * @uses Laucov\Http\Message\AbstractIncomingMessage::__construct
      * @uses Laucov\Http\Message\AbstractMessage::getBody
      * @uses Laucov\Http\Message\AbstractOutgoingMessage::setBody
+     * @uses Laucov\Http\Message\AbstractOutgoingMessage::setHeaderLine
      * @uses Laucov\Http\Message\IncomingRequest::__construct
      * @uses Laucov\Http\Message\Traits\RequestTrait::getMethod
      * @uses Laucov\Http\Message\Traits\RequestTrait::getUri
