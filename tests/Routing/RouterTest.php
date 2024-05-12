@@ -347,9 +347,24 @@ class RouterTest extends TestCase
      * @covers ::addPrelude
      * @uses Laucov\Http\Routing\Router::__construct
      */
+    public function testPreludesMustExist(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $message = '%s does not exist and cannot be used as a prelude.';
+        $this->expectExceptionMessage(sprintf($message, '\Foo\Bar\Baz'));
+        $this->router->addPrelude('foo', '\Foo\Bar\Baz', []);
+    }
+
+    /**
+     * @covers ::addPrelude
+     * @uses Laucov\Http\Routing\Router::__construct
+     */
     public function testPreludesMustImplementThePreludeInterface(): void
     {
         $this->expectException(\InvalidArgumentException::class);
+        $message = 'All prelude classes must implement %s.';
+        $message = sprintf($message, PreludeInterface::class);
+        $this->expectExceptionMessage($message);
         $this->router->addPrelude('foo', NotAPrelude::class, []);
     }
 

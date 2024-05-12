@@ -132,12 +132,20 @@ class Router
         string $class_name,
         array $parameters,
     ): static {
+        // Check if the prelude class exists.
+        if (!class_exists($class_name)) {
+            $msg = '%s does not exist and cannot be used as a prelude.';
+            throw new \InvalidArgumentException(sprintf($msg, $class_name));
+        }
+
+        // Check if the prelude class implements PreludeInterface.
         if (!is_a($class_name, PreludeInterface::class, true)) {
             $message = 'All prelude classes must implement %s.';
             $message = sprintf($message, PreludeInterface::class);
             throw new \InvalidArgumentException($message);
         }
 
+        // Set prelude option.
         $this->preludes[$name] = [$class_name, $parameters];
 
         return $this;
