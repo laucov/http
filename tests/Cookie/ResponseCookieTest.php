@@ -40,6 +40,93 @@ use PHPUnit\Framework\TestCase;
 class ResponseCookieTest extends TestCase
 {
     /**
+     * Provides Set-Cookie headers and expectations for the cookie properties.
+     */
+    public function headerProvider(): array
+    {
+        return [
+            'Test with Expires and Path' => [
+                'username=johndoe; Expires=Wed, 21 Oct 2020 07:28:00 GMT; '
+                    . 'Path=/',
+                [
+                    'name' => 'username',
+                    'value' => 'johndoe',
+                    'domain' => null,
+                    'expires' => 'Wed, 21 Oct 2020 07:28:00 GMT',
+                    'httpOnly' => false,
+                    'maxAge' => null,
+                    'partitioned' => false,
+                    'path' => '/',
+                    'sameSite' => null,
+                    'secure' => false,
+                ],
+            ],
+            'Test with Max-Age, Secure and HttpOnly' => [
+                'sessionid=abc123; Max-Age=3600; Secure; HttpOnly',
+                [
+                    'name' => 'sessionid',
+                    'value' => 'abc123',
+                    'domain' => null,
+                    'expires' => null,
+                    'httpOnly' => true,
+                    'maxAge' => 3600,
+                    'partitioned' => false,
+                    'path' => null,
+                    'sameSite' => null,
+                    'secure' => true,
+                ],
+            ],
+            'Test with Domain and SameSite' => [
+                'lang=en-US; Domain=.example.com; SameSite=Strict',
+                [
+                    'name' => 'lang',
+                    'value' => 'en-US',
+                    'domain' => '.example.com',
+                    'expires' => null,
+                    'httpOnly' => false,
+                    'maxAge' => null,
+                    'partitioned' => false,
+                    'path' => null,
+                    'sameSite' => SameSite::STRICT,
+                    'secure' => false,
+                ],
+            ],
+            'Test with Partitioned, Max-Age and SameSite' => [
+                'userId=12345; Partitioned; Max-Age=3600; SameSite=Lax',
+                [
+                    'name' => 'userId',
+                    'value' => '12345',
+                    'domain' => null,
+                    'expires' => null,
+                    'httpOnly' => false,
+                    'maxAge' => 3600,
+                    'partitioned' => true,
+                    'path' => null,
+                    'sameSite' => SameSite::LAX,
+                    'secure' => false,
+                ],
+            ],
+            'Test with URL encoded characters' => [
+                'preferences=%7B%22theme%22%3A%22light%22%2C%22language%22%3A%'
+                    . '22en%22%7D; Max-Age=604800; SameSite=Strict',
+                [
+                    'name' => 'preferences',
+                    'value' => '{"theme":"light","language":"en"}',
+                    'domain' => null,
+                    'expires' => null,
+                    'httpOnly' => false,
+                    'maxAge' => 604800,
+                    'partitioned' => false,
+                    'path' => null,
+                    'sameSite' => SameSite::STRICT,
+                    'secure' => false,
+                ],
+            ],
+
+        ];
+    }
+
+    /**
      * @covers ::__construct
      * @covers ::__toString
      * @uses Laucov\Http\Cookie\AbstractCookie::__construct
@@ -84,5 +171,26 @@ class ResponseCookieTest extends TestCase
         );
         $expected = 'foo=bar; Max-Age=12345';
         $this->assertSame($expected, strval($cookie));
+    }
+
+    /**
+     * @covers ::createFromHeader
+     * @uses Laucov\Http\Cookie\AbstractCookie::__construct
+     * @uses Laucov\Http\Cookie\ResponseCookie::__construct
+     * @dataProvider headerProvider
+     */
+    public function testCanCreateFromHeader(
+        string $header_line,
+        array $properties,
+    ): void {
+        // Create the cookie.
+        $cookie = ResponseCookie::createFromHeader($header_line);
+
+        // Check properties.
+        foreach ($properties as $name => $value) {
+            $message = 'Assert that $cookie->%s is %s.';
+            $message = sprintf($message, $name, var_export($value, true));
+            $this->assertSame($value, $cookie->{$name}, $message);
+        }
     }
 }

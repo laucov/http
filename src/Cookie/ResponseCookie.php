@@ -34,6 +34,40 @@ namespace Laucov\Http\Cookie;
 class ResponseCookie extends AbstractCookie
 {
     /**
+     * Create a cookie instance from a "Set-Cookie" header line.
+     */
+    public static function createFromHeader(string $header_line): static
+    {
+        // Split properties.
+        $values = array_map('trim', explode(';', $header_line));
+        array_walk($values, function (&$prop) {
+            $prop = array_map('trim', array_pad(explode('=', $prop), 2, null));
+        });
+
+        // Get name, value and properties.
+        [$name, $value] = array_shift($values);
+        $value = urldecode($value);
+        $props = array_column($values, 1, 0);
+        $props = array_change_key_case($props, CASE_LOWER);
+
+        // Create instance.
+        return new ResponseCookie(
+            $name,
+            $value,
+            domain: $props['domain'] ?? null,
+            expires: $props['expires'] ?? null,
+            httpOnly: array_key_exists('httponly', $props),
+            maxAge: $props['max-age'] ?? null,
+            partitioned: array_key_exists('partitioned', $props),
+            path: $props['path'] ?? null,
+            sameSite: isset($props['samesite'])
+                ? SameSite::from($props['samesite'])
+                : null,
+            secure: array_key_exists('secure', $props),
+        );
+    }
+
+    /**
      * Create the cookie instance.
      */
     public function __construct(
