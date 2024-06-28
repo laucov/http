@@ -36,7 +36,6 @@ use Laucov\Http\Message\OutgoingResponse;
 use Laucov\Http\Message\RequestInterface;
 use Laucov\Http\Message\ResponseInterface;
 use Laucov\Http\Routing\Call\Interfaces\PreludeInterface;
-use Laucov\Http\Routing\Call\Route;
 use Laucov\Http\Routing\Router;
 use Laucov\Http\Server\ServerInfo;
 use PHPUnit\Framework\TestCase;
